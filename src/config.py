@@ -30,19 +30,7 @@ DATA_CONFIG_PATH = EXCEL_PATH / "data_didong" / "config.xlsx"
 DATA_GNOC_PAKH_PATH = EXCEL_PATH / "data_CDBR" / "Log ton PAKH.xlsx"
 DATA_GNOC_TKM_PATH = EXCEL_PATH / "data_CDBR" / "Log ton TKM.xlsx"
 DATA_GNOC_logGnoc_PATH = EXCEL_PATH / "data_CDBR" / "Log gnoc.xlsx"
-
-data_cdbr_path = EXCEL_PATH / "data_CDBR"
-# Tìm file .xlsm trong thư mục
-xlsm_files = list(data_cdbr_path.glob("*.xlsm"))
-
-# Kiểm tra nếu tồn tại file .xlsm
-if len(xlsm_files) == 1:
-    DATA_TOOL_MANAGEMENT_CDBR_PATH = xlsm_files[0]
-    print(f"Đã tìm thấy file: {DATA_TOOL_MANAGEMENT_CDBR_PATH}")
-elif len(xlsm_files) > 1:
-    print("Có nhiều file .xlsm trong thư mục, hãy chọn một file cụ thể.")
-else:
-    print("Không tìm thấy file .xlsm trong thư mục.")
+DATA_TOOL_MANAGEMENT_CDBR_PATH = EXCEL_PATH / "data_CDBR" / "LAN.xlsm"
 
 # LƯU HÌNH CẢNH BÁO DI ĐỘNG
 CNCT_IMG_PATH = EXCEL_PATH / "img" / "tth"

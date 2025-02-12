@@ -10,7 +10,7 @@ import os
 from pynput.keyboard import Controller, Key
 import pyperclip
 from bs4 import BeautifulSoup
-
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 from config import *
 from utils import *
@@ -440,9 +440,15 @@ class WhatsAppBot(BrowserManager):
                     )
                 )
                 send_button.click()
-                print("gui thanh cong")
-                sleep(3)
-                return True
+                print("Hoàn tất quá trình gửi tin nhắn. Chờ tin nhắn gửi đi thành công ...")
+                sleep(2)
+
+                if self.get_last_message_info():
+                    sleep(2)
+                    return True
+                
+                else:
+                    return False
 
             except Exception as e:
                 print(e)
@@ -525,6 +531,11 @@ class WhatsAppBot(BrowserManager):
             print(f"Không tìm thấy ô tin nhắn: {e}")
 
     def send_Error_Notification(self, phone_number, message):
+
+        if len(phone_number) <9:
+            print("Sdt không hợp lệ")
+            return
+        
         if not phone_number.startswith("+84"):
             phone_number = "+84" + phone_number.lstrip(
                 "0"
@@ -532,20 +543,80 @@ class WhatsAppBot(BrowserManager):
             if phone_number.endswith(".0"):
                 phone_number = phone_number.rstrip(".0")  # Loai bo dau thap phan
 
-        self.driver.get(
-            f"https://web.whatsapp.com/send?phone={phone_number}&text={message}"
-        )
         try:
-            send_button = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, XPATHS_WHATSAPP["send_button_an"])
-                )
+            self.driver.get(
+                f"https://web.whatsapp.com/send?phone={phone_number}&text={message}"
             )
-            send_button.click()
-            sleep(3)
+        
+            try:
+                send_button = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, XPATHS_WHATSAPP["send_button_an"])
+                    )
+                )
+                send_button.click()
+                sleep(3)
+                self.get_last_message_info()
+                
+            except Exception as e:
+                print(f"lỗi bấm nút gửi: {e}")
         except Exception as e:
-            print(f"lỗi gửi tin nhắn báo lỗi cho bản thân: {e}")
+                print(f"lỗi gửi tin nhắn báo lỗi cho bản thân: {e}")
 
+    def get_last_message_info(self):
+        """Hàm lấy thông tin tin nhắn mới nhất"""
+        try:
+            # Chờ đợi cho đến khi có ít nhất một tin nhắn được gửi đi
+            WebDriverWait(self.driver, 100).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div.message-out"))
+            )
+
+            # Lấy danh sách tin nhắn đã gửi
+            messages = self.driver.find_elements(By.CSS_SELECTOR, "div.message-out")
+
+            if not messages:
+                print("❌ Không có tin nhắn nào được gửi đi.")
+                return False
+
+
+            # Lấy tin nhắn cuối cùng mà bạn đã gửi
+            last_message = messages[-1]  # Tin nhắn cuối cùng
+
+            # Kiểm tra trạng thái tin nhắn trong vòng 180 giây
+            max_attempts = 90  # Số lần thử tối đa
+            attempt = 0
+
+            while attempt < max_attempts:
+                try:
+                    # Kiểm tra trạng thái tin nhắn
+                    if last_message.find_elements(
+                        By.CSS_SELECTOR, 'span[data-icon="msg-dblcheck"]'
+                    ):
+                        print("✅✅ Tin nhắn đã gửi đi và được nhận!")
+                        return True
+
+                    elif last_message.find_elements(
+                        By.CSS_SELECTOR, 'span[data-icon="msg-check"]'
+                    ):
+                        print("✅ Tin nhắn đã gửi đi nhưng chưa được nhận.")
+                        return True
+
+                except NoSuchElementException:
+                    pass
+
+                attempt += 1
+                sleep(2)  # Kiểm tra lại sau 2 giây
+
+            # Nếu vượt quá số lần thử
+            print("❌ Không thể xác định trạng thái tin nhắn sau nhiều lần thử.")
+            return False
+
+        except TimeoutException:
+            print("❌ Không tìm thấy tin nhắn nào được gửi đi trong thời gian chờ.")
+            return False
+        except Exception as e:
+            print(f"❌ Lỗi khi lấy thông tin tin nhắn: {e}")
+            return False
 
 # Lớp ZaloBot
 class ZaloBot(BrowserManager):

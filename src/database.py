@@ -61,7 +61,7 @@ def connect_to_Db_CDBR():
                 connected = True  # Đặt trạng thái thành công
 
                 # Truy vấn và xử lý dữ liệu
-                query_TKM = "select * from qlctkt.tkm_cdbr_open where `tỉnh/tp` = 'Bà Rịa Vũng Tàu' and `Dịch vụ` in ('SmartTV360 trả sau', 'FTTH', 'BoxTV360 trả sau', 'Camera', 'IPPhone', 'Multiscreen 2 chiều')"
+                query_TKM = "select * from qlctkt.tkm_cdbr_open where `tỉnh/tp` = 'Long An' and `Dịch vụ` in ('SmartTV360 trả sau', 'FTTH', 'BoxTV360 trả sau', 'Camera', 'IPPhone', 'Multiscreen 2 chiều')"
                 result_TKM = pd.read_sql(query_TKM, connection)
                 result_TKM["ngày tạo công việc"] = pd.to_datetime(
                     result_TKM["ngày tạo công việc"]
@@ -72,7 +72,7 @@ def connect_to_Db_CDBR():
                 result_TKM.to_excel(DATA_GNOC_TKM_PATH, index=False, engine="openpyxl")
                 print("Lấy dữ liệu TKM thành công!")
 
-                query_PAKH = "SELECT * FROM bccs.pakh_ton where `Nguồn tiếp nhận` = 'Bà Rịa Vũng Tàu'"
+                query_PAKH = "SELECT * FROM bccs.pakh_ton where `Nguồn tiếp nhận` = 'Long An'"
                 result_PAKH = pd.read_sql(query_PAKH, connection)
                 result_PAKH.to_excel(
                     DATA_GNOC_PAKH_PATH, index=False, engine="openpyxl"

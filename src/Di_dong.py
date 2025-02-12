@@ -223,6 +223,7 @@ def send_message_cnct():
                         message, img_path
                     )
                     if send_mess_status:
+                        
                         sleep(5)
                         browser.close()
                         return True
