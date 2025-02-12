@@ -10,6 +10,7 @@ import os
 from pynput.keyboard import Controller, Key
 import pyperclip
 from bs4 import BeautifulSoup
+from selenium.common.exceptions import StaleElementReferenceException
 
 
 from config import *
@@ -595,9 +596,11 @@ class ZaloBot(BrowserManager):
     def find_group_name(self, link):
         try:
             self.open_url(link)
+            return True
 
         except Exception as e:
             print(e)
+            return False
 
     def check_group_name(self, group_name):
         try:
@@ -766,6 +769,47 @@ class ZaloBot(BrowserManager):
 
         except Exception as e:
             print(e)
+
+    def send_file_zalo(self, file_path):
+        try:
+            # Nhấn vào nút đính kèm file (THAY XPATH CHO ĐÚNG)
+            attach_button_xpath = '//*[@id="chat-box-bar-id"]/div[1]/ul/li[3]/div'  # XPath này có thể thay đổi theo Zalo
+            attach_button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, attach_button_xpath))
+            )
+            attach_button.click()
+
+            # Chờ input file xuất hiện
+            file_input_xpath ='/html/body/div[2]/div[2]/div/div/div/div'  # Xpath của input chọn file
+            file_input = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, file_input_xpath))
+            )
+            file_input.click()
+            sleep(2)
+
+             # Tương tác với cửa sổ file picker bằng pywinauto
+            app = Application(backend="win32").connect(
+                title="Open"
+            )  # Thay bằng tiêu đề thực tế
+            dialog = app.window(title_re="Open")  # Thay bằng tiêu đề thực tế
+            dialog.set_focus()  # Đưa cửa sổ lên trước
+            dialog["Edit"].set_text(file_path)  # Nhập đường dẫn file
+            sleep(2)
+            dialog["Open"].click_input()  # Nhấn nút Open
+            
+            # Nhấn nút gửi (THAY XPATH CHO ĐÚNG)
+            message_box = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["message_box"]))
+            )
+            message_box.click()
+            message_box.send_keys(Keys.ENTER)
+            sleep(5)
+
+            print("📂 File đã được gửi thành công!")
+
+
+        except Exception as e:
+            print(f"❌ Lỗi khi gửi file: {e}")
 
     def send_message_CDBR(self, message):
         try:
