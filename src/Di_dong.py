@@ -29,6 +29,10 @@ img_CNCT_path = CNCT_IMG_PATH / "tinh.jpg"  # đỉa chỉ gửi hình tỉnh
 
 
 def getDB_to_excel(excel_gnoc_path):
+
+    #xóa dữ liệu cũ
+    delete_file(DATA_GNOC_RAW_PATH)
+    
     max_retries = 5
     retries = 0
 
@@ -88,11 +92,12 @@ def getDB_to_excel(excel_gnoc_path):
                             'SAP_Nâng cấp trạm ứng cứu thông tin'
                         );
                     """
+            
             print(f"Đang lấy dữ liệu của tỉnh {first_province}")
             # Xuất dữ liệu ra Excel
             query_to_excel(connection, query_pakh, excel_gnoc_path)
             print("Lấy file database thành công!")
-            return
+            return True
 
         except ConnectionError as ce:
             print(f"Lỗi kết nối: {ce}")
@@ -114,6 +119,7 @@ def getDB_to_excel(excel_gnoc_path):
         sleep(5)
 
     print("Không thể hoàn thành tác vụ sau nhiều lần thử.")
+    return False
 
 
 def excel_transition_and_run_macro(
@@ -122,6 +128,9 @@ def excel_transition_and_run_macro(
     """
     Chuyển dữ liệu từ file excel gnoc raw qua qua file tool để xử lý
     """
+    delete_data_folder(CNCT_IMG_PATH)
+    delete_data_folder(USER_IMG_PATH)
+
     try:
         excel_tool_manager.open_file()
         if not excel_tool_manager.run_macro("Module2.DanDuLieu"):
@@ -342,6 +351,8 @@ def send_message_cnct_zalo():
             try:
                 if zalo.send_attached_img_message(message, img_path, "all"):
                     sleep(5)
+                    zalo.send_file_zalo(DATA_TOOL_MANAGEMENT_PATH)
+                    sleep(10)
                     browser.close()
                     return True
                 else:
@@ -550,8 +561,22 @@ def send_mail_process():
 # quá trình whatsAPP: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
 def auto_process_diDong():
     try:
-        getDB_to_excel(DATA_GNOC_RAW_PATH)
-
+        if not getDB_to_excel(DATA_GNOC_RAW_PATH):
+            
+            try:
+                end_opvn_application()
+                
+                try:
+                    getDB_to_excel(DATA_GNOC_RAW_PATH)
+                
+                except Exception as e:
+                    print(f"Lỗi trong getDB_to_excel: {e}")
+                    return
+                
+            except Exception as e:
+                print(f"Lỗi trong end_opvn_application: {e}")
+                return
+        
         try:
             # xử lý excel
             for attempt in range(5):
@@ -583,7 +608,8 @@ def auto_process_diDong():
                 try:
                     # gửi thông báo cấp cụm đội kt
                     list = send_message_user()
-                    nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công "
+                    date_time = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+                    nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công vào {date_time} "
                     browser.start_browser(CHROME_PROFILE_CDBR_PATH)
                     whatsapp.driver = browser.driver
                     whatsapp.send_Error_Notification(PHONE_NUMBER, nofication)
@@ -608,7 +634,8 @@ def auto_process_diDong():
                 try:
                     # gửi thông báo cấp cụm huyện có tag tên
                     list = send_message_user_with_TAG_zalo()
-                    nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công "
+                    date_time = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+                    nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công vào {date_time} "
                     print(nofication)
 
                 except Exception as e:

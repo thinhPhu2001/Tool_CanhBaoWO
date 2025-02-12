@@ -18,53 +18,39 @@ data_CDBR_tool_manager = ExcelManager(DATA_TOOL_MANAGEMENT_CDBR_PATH)
 
 module_CDBR_ZALO = [
     (
-        "BDG-CĐBR - Bến Cát - Bàu Bàng",
-        '//*[@id="group-item-g3178603850816266117"]',
-        "Handle_Data.pic_TKM_BCT_BBG",
-        "Handle_Data.pic_PAKH_BCT_BBG",
-        "Handle_Data.pic_NV_BCT_BBG",
+        "CỤM 2_CDBR",
+        'https://chat.zalo.me/?g=nkknrr919',
+        "Handle_Data.pic_TKM_CTH_TBN",
+        "Handle_Data.pic_PAKH_CTH_TBN",
+        "Handle_Data.pic_NV_CTH_TBN",
     ),
     (
-        "BDG-CĐBR - Dầu Tiếng",
-        '//*[@id="group-item-g7285665710449611138"]',
-        "Handle_Data.pic_TKM_DTG",
-        "Handle_Data.pic_PAKH_DTG",
-        "Handle_Data.pic_NV_DTG",
+        "Cụm 3",
+        'https://chat.zalo.me/?g=tptprd224',
+        "Handle_Data.pic_TKM_GDU_DMC",
+        "Handle_Data.pic_PAKH_GDU_DMC",
+        "Handle_Data.pic_NV_GDU_DMC",
     ),
     (
-        "BDG-CĐBR - Dĩ An",
-        '//*[@id="group-item-g5411862601516187267"]',
-        "Handle_Data.pic_TKM_DAN",
-        "Handle_Data.pic_PAKH_DAN",
-        "Handle_Data.pic_NV_DAN",
+        "TNH-TTH1-DÂY MÁY",
+        'https://chat.zalo.me/?g=hygzrt505',
+        "Handle_Data.pic_TKM_TP_HTH",
+        "Handle_Data.pic_PAKH_TP_HTH",
+        "Handle_Data.pic_NV_TP_HTH",
     ),
     (
-        "BDG-CĐBR - Phú Giáo",
-        '//*[@id="group-item-g1989074657098575363"]',
-        "Handle_Data.pic_TKM_PGO",
-        "Handle_Data.pic_PAKH_PGO",
-        "Handle_Data.pic_NV_PGO",
+        "[ CỤM 4_TNH]",
+        'https://chat.zalo.me/?g=snzpcz272',
+        "Handle_Data.pic_TKM_TBG_BCU",
+        "Handle_Data.pic_PAKH_TBG_BCU",
+        "Handle_Data.pic_NV_TBG_BCU",
     ),
     (
-        "BDG-CĐBR - Tân Uyên - Bắc Tân Uyên",
-        '//*[@id="group-item-g7717459319638711680"]',
-        "Handle_Data.pic_TKM_TUN_BTU",
-        "Handle_Data.pic_PAKH_TUN_BTU",
-        "Handle_Data.pic_NV_TUN_BTU",
-    ),
-    (
-        "BDG-CĐBR - Thủ Dầu Một",
-        '//*[@id="group-item-g8365703888020947841"]',
-        "Handle_Data.pic_TKM_TDM",
-        "Handle_Data.pic_PAKH_TDM",
-        "Handle_Data.pic_NV_TDM",
-    ),
-    (
-        "BDG-CĐBR - Thuận An",
-        '//*[@id="group-item-g7464963621321691137"]',
-        "Handle_Data.pic_TKM_TAN",
-        "Handle_Data.pic_PAKH_TAN",
-        "Handle_Data.pic_NV_TAN",
+        "TCU CĐBR",
+        'https://chat.zalo.me/?g=kywtxh405',
+        "Handle_Data.pic_TKM_TCU",
+        "Handle_Data.pic_PAKH_TCU",
+        "Handle_Data.pic_NV_TCU",
     ),
 ]
 
@@ -265,15 +251,44 @@ def run_macro_and_send_message_CDBR_ZALO():
     """
     chạy hàm macro sao chép và dán vào ô tin nhắn gửi các huyện
     """
+    link_KT = 'https://chat.zalo.me/?g=spdgem419'
+
     browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     zalo.driver = browser.driver
 
     try:
         # mở excel và run các macro xử lý dữ liệu
         data_CDBR_tool_manager.open_file()
-        print(f"Mở file {DATA_TOOL_MANAGEMENT_CDBR_PATH} thành công")
 
-        for group, link, macro1, macro2, macro3 in module_CDBR_ZALO_test:
+        temp = zalo.find_group_name(link_KT)
+        retries = 0
+        max_retries = 5
+        while retries < max_retries:
+            if temp:
+                try:
+                    data_CDBR_tool_manager.run_macro("Handle_data.pic_General")
+                    print("Run macro thành công")
+                    sleep(5)
+                    zalo.send_message_CDBR("Cảnh báo tồn tác vụ mức cụm - huyện")
+                    zalo.send_file_zalo(DATA_TOOL_MANAGEMENT_CDBR_PATH)
+                    sleep(10)
+                    break
+
+                except Exception as e:
+                    print(f"CĐBR: Lỗi xảy ra trong quá trình gửi tin nhắn: {e}")
+                print("gửi kt day may")
+            else:
+                retries += 1
+                print(f"CĐBR: Lỗi xảy ra trong quá trình gửi tin nhắn")
+                zalo.access_zalo()  # Hàm tải lại trang (giả định bạn có hàm này)
+                temp = zalo.find_group_name(link_KT)  # Thử tìm lại nhóm
+
+        if retries == max_retries and not temp:
+            print(
+                f"Đã thử {max_retries} lần nhưng không tìm thấy nhóm LAN KT Dây máy. Bỏ qua nhóm này."
+            )
+
+        for group, link, macro1, macro2, macro3 in module_CDBR_ZALO:
             zalo.find_group_name(link)
             try:
                 data_CDBR_tool_manager.run_macro(macro1)
@@ -304,7 +319,6 @@ def run_macro_and_send_message_CDBR_ZALO():
         data_CDBR_tool_manager.close_all_file()
         browser.close()
         return True
-
     except Exception as e:
         print(f"không thể mở file excel: {e}")
         return False
@@ -452,7 +466,8 @@ def auto_process_CDBR():
                     if not run_macro_and_send_message_CDBR_ZALO():
                         print("Gửi tin nhắn cho các huyện thất bại!!!")
                         return
-                    print("gửi tin nhắn cho các huyện thành công!!!")
+                    date_time = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+                    print(f"gửi tin nhắn cho các huyện thành công vào {date_time} !!!")
 
                 except Exception as e:
                     print(f"CĐBR-Lỗi khi gửi tin nhắn: {e}")

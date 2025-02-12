@@ -11,6 +11,13 @@ import pygetwindow as gw
 from PIL import Image
 import win32clipboard
 import io
+import shutil
+import pyperclip
+from pathlib import Path
+import ctypes
+import shutil
+import struct
+import win32con
 
 # xóa dấu tiếng việt
 s1 = "ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ"
@@ -138,3 +145,32 @@ def copy_image_to_clipboard(file_path):
         print("Ảnh đã được copy vào clipboard.")
     except Exception as e:
         print(f"Lỗi khi copy ảnh: {e}")
+
+
+def delete_data_folder(folder_path):
+    # Kiểm tra nếu thư mục tồn tại
+    if os.path.exists(folder_path):
+        # Duyệt qua tất cả các tệp và thư mục trong thư mục
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+
+            # Nếu là thư mục, xóa thư mục cùng tất cả các tệp trong đó
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+            else:
+                os.remove(file_path)
+        print("Đã xóa hết dữ liệu trong thư mục.")
+    else:
+        print("Thư mục không tồn tại.")
+
+def delete_file(file_path):
+    # Kiểm tra nếu đường dẫn tồn tại
+    if os.path.exists(file_path):
+        # Kiểm tra xem có phải là file không (tránh xóa nhầm thư mục)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+            print(f"Đã xóa file: {file_path}")
+        else:
+            print(f"Lỗi: '{file_path}' không phải là một file.")
+    else:
+        print(f"Lỗi: File '{file_path}' không tồn tại.")
