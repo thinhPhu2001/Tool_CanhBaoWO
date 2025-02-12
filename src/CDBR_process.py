@@ -96,6 +96,7 @@ module_CDBR_ZALO_test = [
 module = [
     (
         "LAN_VHG-THG",
+        "https://chat.whatsapp.com/KL90bbbqo2PL9MrVzyXSPO",
         "Handle_Data.pic_TKM_VHG_THG",
         "Handle_Data.pic_PAKH_VHG_THG",
         "Handle_Data.pic_NV_VHG_THG",
@@ -105,6 +106,7 @@ module = [
     ),
     (
         "LAN_BLC",
+        "https://chat.whatsapp.com/HG0ySyBJApKKlV1eLvELJY",
         "Handle_Data.pic_TKM_BLC",
         "Handle_Data.pic_PAKH_BLC",
         "Handle_Data.pic_NV_BLC",
@@ -114,6 +116,7 @@ module = [
     ),
     (
         "LAN_CGC-CDC",
+        "https://chat.whatsapp.com/DmMw2J87cqAEhp44PpTQmt",
         "Handle_Data.pic_TKM_CGC_CDC",
         "Handle_Data.pic_PAKH_CGC_CDC",
         "Handle_Data.pic_NV_CGC_CDC",
@@ -123,6 +126,7 @@ module = [
     ),
     (
         "LAN_TAN-CTH-TTU",
+        "https://chat.whatsapp.com/AKtFptJAlDQ29UzaiBk5Ah",
         "Handle_Data.pic_TKM_TAN_CTH_TTU",
         "Handle_Data.pic_PAKH_TAN_CTH_TTU",
         "Handle_Data.pic_NV_TAN_CTH_TTU",
@@ -132,6 +136,7 @@ module = [
     ),
     (
         "LAN_KTG-MHA-TTH",
+        "https://chat.whatsapp.com/LdU6LcV57waL4OoS5ViPwC",
         "Handle_Data.pic_TKM_KTG_MHA_TTH",
         "Handle_Data.pic_PAKH_KTG_MHA_TTH",
         "Handle_Data.pic_NV_KTG_MHA_TTH",
@@ -141,6 +146,7 @@ module = [
     ),
     (
         "LAN_THA-TTA",
+        "https://chat.whatsapp.com/BA3xBF3Ux9SGTRzT4TAiia",
         "Handle_Data.pic_TKM_THA_TTA",
         "Handle_Data.pic_PAKH_THA_TTA",
         "Handle_Data.pic_NV_THA_TTA",
@@ -150,6 +156,7 @@ module = [
     ),
     (
         "LAN_ĐHA-ĐHE",
+        "https://chat.whatsapp.com/KK2oUsIHCcEFy4RnUWkPhv",
         "Handle_Data.pic_TKM_DHA_DHE",
         "Handle_Data.pic_PAKH_DHA_DHE",
         "Handle_Data.pic_NV_DHA_DHE",
@@ -158,28 +165,28 @@ module = [
         "Cảnh báo tồn tác vụ mức FT",
     ),
 ]
-module_test_WSA = [
-    (
-        "LAN_VHG-THG",
-        "https://chat.whatsapp.com/IM3QRIA3k15JCWolUt3GkV",
-        "Handle_Data.pic_TKM_BRA_LDN",
-        "Handle_Data.pic_PAKH_BRA_LDN",
-        "Handle_Data.pic_NV_BRA_LDN",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức FT",
-    ),
-    (
-        "LAN_BLC",
-        "https://chat.whatsapp.com/FpSbcPMabUiAYpRqY5FeqE",
-        "Handle_Data.pic_TKM_CDC",
-        "Handle_Data.pic_PAKH_CDC",
-        "Handle_Data.pic_NV_BRA_LDN",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức",
-    ),
-]
+# module_test_WSA = [
+#     (
+#         "LAN_VHG-THG",
+#         "https://chat.whatsapp.com/IM3QRIA3k15JCWolUt3GkV",
+#         "Handle_Data.pic_TKM_BRA_LDN",
+#         "Handle_Data.pic_PAKH_BRA_LDN",
+#         "Handle_Data.pic_NV_BRA_LDN",
+#         "Cảnh báo tồn TKM",
+#         "Cảnh báo tồn PAKH",
+#         "Cảnh báo tồn tác vụ mức FT",
+#     ),
+#     (
+#         "LAN_BLC",
+#         "https://chat.whatsapp.com/FpSbcPMabUiAYpRqY5FeqE",
+#         "Handle_Data.pic_TKM_CDC",
+#         "Handle_Data.pic_PAKH_CDC",
+#         "Handle_Data.pic_NV_BRA_LDN",
+#         "Cảnh báo tồn TKM",
+#         "Cảnh báo tồn PAKH",
+#         "Cảnh báo tồn tác vụ mức",
+#     ),
+# ]
 
 # browser variable
 browser = BrowserManager()
@@ -315,7 +322,7 @@ def run_macro_and_send_message_CDBR_WsA():
     """
     chạy hàm macro sao chép và dán vào ô tin nhắn gửi các huyện (WHatsApp)
     """
-    link_KTDayMay = "https://chat.whatsapp.com/FpSbcPMabUiAYpRqY5FeqE"
+    link_KTDayMay = "https://chat.whatsapp.com/IHIeEsiUnu1BVWAlN0JVMc"
     browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     whatsapp.driver = browser.driver
     whatsapp.access_whatsapp()
@@ -351,7 +358,7 @@ def run_macro_and_send_message_CDBR_WsA():
                 f"Đã thử {max_retries} lần nhưng không tìm thấy nhóm LAN KT Dây máy. Bỏ qua nhóm này."
             )
 
-        for group, link, macro1, macro2, macro3, mess1, mess2, mess3 in module_test_WSA:
+        for group, link, macro1, macro2, macro3, mess1, mess2, mess3 in module:
             temp = whatsapp.find_group_name(link)
             retries = 0
             max_retries = 5

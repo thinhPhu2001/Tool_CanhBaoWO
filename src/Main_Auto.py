@@ -46,20 +46,25 @@ def auto_combines():
 
 if __name__ == "__main__":
 
-    # # Lên lịch chạy
-    # schedule.every().day.at("06:30").do(auto_combines)
-    # schedule.every().day.at("08:30").do(auto_process_CDBR)
-    # schedule.every().day.at("10:30").do(auto_process_CDBR)
-    # schedule.every().day.at("12:30").do(auto_combines)
-    # schedule.every().day.at("14:00").do(auto_process_CDBR)
-    # schedule.every().day.at("16:20").do(auto_combines)
+    # Lên lịch chạy
+    schedule.every().day.at("06:30").do(auto_combines)
+    schedule.every().day.at("08:20").do(auto_process_CDBR)
+    schedule.every().day.at("10:20").do(auto_process_CDBR)
+    schedule.every().day.at("12:30").do(auto_combines)
+    schedule.every().day.at("14:20").do(auto_process_CDBR)
+    schedule.every().day.at("16:25").do(auto_combines)
+    schedule.every().day.at("19:30").do(auto_combines)
 
-    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    # while True:
-    #     schedule.run_pending()
-    #     sleep(3)
+    print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
+    while True:
+        schedule.run_pending()
+        sleep(3)
 
+    # auto_combines()
     # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
+    # zalo.driver = browser.driver
+    # zalo.find_group_name("https://chat.zalo.me/?g=mfgjms759")
+    # sleep(10000)
     # whatsapp.driver = browser.driver
     # whatsapp.access_whatsapp()
     # whatsapp.find_group_name("https://chat.whatsapp.com/K8nUGdLAhKC9u3aqvwTauH")
@@ -68,8 +73,8 @@ if __name__ == "__main__":
     # on_openvpn()
     # sleep(10)
 
-    # browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
-    # sleep(1000)
+    # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
+    # sleep(5000)
 
     # data_tool_manager.open_file()
     # data_tool_manager.run_macro("Module2.len_cum_doi")
@@ -77,4 +82,10 @@ if __name__ == "__main__":
     # data_tool_manager.close_all_file()
     # auto_combines()
 
+    # lấy dữ liệu di động
+    # getDB_to_excel(DATA_GNOC_RAW_PATH)
+    # excel_transition_and_run_macro(
+    #                 data_gnoc_raw_manager, data_tool_manager
+    #             )
     
+
