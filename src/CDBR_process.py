@@ -95,90 +95,53 @@ module_CDBR_ZALO_test = [
 # Module cho WhatsApp
 module = [
     (
-        "LAN_VHG-THG",
-        "Handle_Data.pic_TKM_VHG_THG",
-        "Handle_Data.pic_PAKH_VHG_THG",
-        "Handle_Data.pic_NV_VHG_THG",
+        "Dây máy CTH-CTA",
+        "https://chat.whatsapp.com/DvxLt1cfq5w4mafYT1YB5n",
+        "Handle_Data.pic_TKM_CTH_CTHA",
+        "Handle_Data.pic_PAKH_CTH_CTHA",
+        "Handle_Data.pic_SOC2_CTH_CTHA",
+        "Handle_Data.pic_NV_CTH_CTHA",
         "Cảnh báo tồn TKM",
         "Cảnh báo tồn PAKH",
+        "Cảnh báo tồn SOC2",
         "Cảnh báo tồn tác vụ mức FT",
     ),
     (
-        "LAN_BLC",
-        "Handle_Data.pic_TKM_BLC",
-        "Handle_Data.pic_PAKH_BLC",
-        "Handle_Data.pic_NV_BLC",
+        "Dây máy LMY",
+        "https://chat.whatsapp.com/C2Xjm2UN6DS6TgkvvR6jCp",
+        "Handle_Data.pic_TKM_LMY",
+        "Handle_Data.pic_PAKH_LMY",
+        "Handle_Data.pic_SOC2_LMY",
+        "Handle_Data.pic_NV_LMY",
         "Cảnh báo tồn TKM",
         "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức",
-    ),
-    (
-        "LAN_CGC-CDC",
-        "Handle_Data.pic_TKM_CGC_CDC",
-        "Handle_Data.pic_PAKH_CGC_CDC",
-        "Handle_Data.pic_NV_CGC_CDC",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
+        "Cảnh báo tồn SOC2",
         "Cảnh báo tồn tác vụ mức FT",
     ),
     (
-        "LAN_TAN-CTH-TTU",
-        "Handle_Data.pic_TKM_TAN_CTH_TTU",
-        "Handle_Data.pic_PAKH_TAN_CTH_TTU",
-        "Handle_Data.pic_NV_TAN_CTH_TTU",
+        "KH-BC COĐINH PHP-NBY",
+        "https://chat.whatsapp.com/BRCuJqieBgg2QChRxEEkxp",
+        "Handle_Data.pic_TKM_NBY_PHP",
+        "Handle_Data.pic_PAKH_NBY_PHP",
+        "Handle_Data.pic_SOC2_NBY_PHP",
+        "Handle_Data.pic_NV_NBY_PHP",
         "Cảnh báo tồn TKM",
         "Cảnh báo tồn PAKH",
+        "Cảnh báo tồn SOC2",
         "Cảnh báo tồn tác vụ mức FT",
     ),
     (
-        "LAN_KTG-MHA-TTH",
-        "Handle_Data.pic_TKM_KTG_MHA_TTH",
-        "Handle_Data.pic_PAKH_KTG_MHA_TTH",
-        "Handle_Data.pic_NV_KTG_MHA_TTH",
+        "VTH-VTY dây máy",
+        "https://chat.whatsapp.com/Bb2dxwQy3GxBI7E8WU8JOh",
+        "Handle_Data.pic_TKM_VTH_VTY",
+        "Handle_Data.pic_PAKH_VTH_VTY",
+        "Handle_Data.pic_SOC2_VTH_VTY",
+        "Handle_Data.pic_NV_VTH_VTY",
         "Cảnh báo tồn TKM",
         "Cảnh báo tồn PAKH",
+        "Cảnh báo tồn SOC2",
         "Cảnh báo tồn tác vụ mức FT",
-    ),
-    (
-        "LAN_THA-TTA",
-        "Handle_Data.pic_TKM_THA_TTA",
-        "Handle_Data.pic_PAKH_THA_TTA",
-        "Handle_Data.pic_NV_THA_TTA",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức FT",
-    ),
-    (
-        "LAN_ĐHA-ĐHE",
-        "Handle_Data.pic_TKM_DHA_DHE",
-        "Handle_Data.pic_PAKH_DHA_DHE",
-        "Handle_Data.pic_NV_DHA_DHE",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức FT",
-    ),
-]
-module_test_WSA = [
-    (
-        "LAN_VHG-THG",
-        "https://chat.whatsapp.com/IM3QRIA3k15JCWolUt3GkV",
-        "Handle_Data.pic_TKM_BRA_LDN",
-        "Handle_Data.pic_PAKH_BRA_LDN",
-        "Handle_Data.pic_NV_BRA_LDN",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức FT",
-    ),
-    (
-        "LAN_BLC",
-        "https://chat.whatsapp.com/FpSbcPMabUiAYpRqY5FeqE",
-        "Handle_Data.pic_TKM_CDC",
-        "Handle_Data.pic_PAKH_CDC",
-        "Handle_Data.pic_NV_BRA_LDN",
-        "Cảnh báo tồn TKM",
-        "Cảnh báo tồn PAKH",
-        "Cảnh báo tồn tác vụ mức",
-    ),
+    )
 ]
 
 # browser variable
@@ -315,7 +278,7 @@ def run_macro_and_send_message_CDBR_WsA():
     """
     chạy hàm macro sao chép và dán vào ô tin nhắn gửi các huyện (WHatsApp)
     """
-    link_KTDayMay = "https://chat.whatsapp.com/FpSbcPMabUiAYpRqY5FeqE"
+    link_KTDayMay = "https://chat.whatsapp.com/8DYotLigdw19snJnSXNKKn"
     browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     whatsapp.driver = browser.driver
     whatsapp.access_whatsapp()
@@ -331,6 +294,13 @@ def run_macro_and_send_message_CDBR_WsA():
         while retries < max_retries:
             if temp:
                 try:
+                    date_clock = datetime.now().strftime("%H:%M:%S")
+                    date_time = datetime.now().strftime("%d-%m-%Y")
+
+                    CDBR_noti = f"Cảnh báo tồn CĐBR đến {date_clock} ngày {date_time}"
+
+                    whatsapp.send_message(CDBR_noti)
+
                     data_CDBR_tool_manager.run_macro("Handle_data.pic_General")
                     print("Run macro thành công")
                     sleep(5)
@@ -351,12 +321,20 @@ def run_macro_and_send_message_CDBR_WsA():
                 f"Đã thử {max_retries} lần nhưng không tìm thấy nhóm LAN KT Dây máy. Bỏ qua nhóm này."
             )
 
-        for group, link, macro1, macro2, macro3, mess1, mess2, mess3 in module_test_WSA:
+        for group, link, macro1, macro2, macro3, macro4, mess1, mess2, mess3, mess4 in module:
             temp = whatsapp.find_group_name(link)
             retries = 0
             max_retries = 5
             while retries < max_retries:
                 if temp:
+
+                    date_clock = datetime.now().strftime("%H:%M:%S")
+                    date_time = datetime.now().strftime("%d-%m-%Y")
+
+                    CDBR_noti = f"Cảnh báo tồn CĐBR đến {date_clock} ngày {date_time}"
+
+                    whatsapp.send_message(CDBR_noti)
+                    
                     try:
                         data_CDBR_tool_manager.run_macro(macro1)
                         print("Run macro thành công")
@@ -380,6 +358,15 @@ def run_macro_and_send_message_CDBR_WsA():
                         print("Run macro thành công")
                         sleep(5)
                         whatsapp.send_message_CDBR(mess3)
+
+                    except Exception as e:
+                        print(f"CĐBR: Lỗi xảy ra trong quá trình gửi tin nhắn: {e}")
+
+                    try:
+                        data_CDBR_tool_manager.run_macro(macro4)
+                        print("Run macro thành công")
+                        sleep(5)
+                        whatsapp.send_message_CDBR(mess4)
 
                     except Exception as e:
                         print(f"CĐBR: Lỗi xảy ra trong quá trình gửi tin nhắn: {e}")

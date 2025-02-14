@@ -88,6 +88,7 @@ def getDB_to_excel(excel_gnoc_path):
                             'SAP_Nâng cấp trạm ứng cứu thông tin'
                         );
                     """
+            # print(query_pakh)
             print(f"Đang lấy dữ liệu của tỉnh {first_province}")
             # Xuất dữ liệu ra Excel
             query_to_excel(connection, query_pakh, excel_gnoc_path)
@@ -223,7 +224,7 @@ def send_message_cnct():
                         message, img_path
                     )
                     if send_mess_status:
-                        sleep(5)
+                        sleep(10)
                         browser.close()
                         return True
 

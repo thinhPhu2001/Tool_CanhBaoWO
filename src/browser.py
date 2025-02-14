@@ -441,7 +441,7 @@ class WhatsAppBot(BrowserManager):
                 )
                 send_button.click()
                 print("gui thanh cong")
-                sleep(3)
+                sleep(10)
                 return True
 
             except Exception as e:

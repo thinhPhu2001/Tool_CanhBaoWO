@@ -30,19 +30,7 @@ DATA_CONFIG_PATH = EXCEL_PATH / "data_didong" / "config.xlsx"
 DATA_GNOC_PAKH_PATH = EXCEL_PATH / "data_CDBR" / "Log ton PAKH.xlsx"
 DATA_GNOC_TKM_PATH = EXCEL_PATH / "data_CDBR" / "Log ton TKM.xlsx"
 DATA_GNOC_logGnoc_PATH = EXCEL_PATH / "data_CDBR" / "Log gnoc.xlsx"
-
-data_cdbr_path = EXCEL_PATH / "data_CDBR"
-# Tìm file .xlsm trong thư mục
-xlsm_files = list(data_cdbr_path.glob("*.xlsm"))
-
-# Kiểm tra nếu tồn tại file .xlsm
-if len(xlsm_files) == 1:
-    DATA_TOOL_MANAGEMENT_CDBR_PATH = xlsm_files[0]
-    print(f"Đã tìm thấy file: {DATA_TOOL_MANAGEMENT_CDBR_PATH}")
-elif len(xlsm_files) > 1:
-    print("Có nhiều file .xlsm trong thư mục, hãy chọn một file cụ thể.")
-else:
-    print("Không tìm thấy file .xlsm trong thư mục.")
+DATA_TOOL_MANAGEMENT_CDBR_PATH = EXCEL_PATH / "data_CDBR" / "CDBR.xlsm"
 
 # LƯU HÌNH CẢNH BÁO DI ĐỘNG
 CNCT_IMG_PATH = EXCEL_PATH / "img" / "tth"
@@ -66,32 +54,24 @@ with open(OPEN_VPN_CONFIG_PATH, "r") as file:
     for line in file:
         if "my phone:" in line:
             PHONE_NUMBER = line.strip().replace("my phone:", "").strip()
-            print(f"my phone: = {PHONE_NUMBER}")
 
         if "pwd:" in line:
             OTP_SECRET = line.strip().replace("pwd:", "").strip()
-            print(f"OTP_SECRET = {OTP_SECRET}")
 
         if "opvn_profile:" in line:
             OPEN_VPN_PROFILE_PATH = line.strip().replace("opvn_profile:", "").strip()
-            print(f"opvn_profile = {OPEN_VPN_PROFILE_PATH}")
 
         if "path:" in line:
             OPEN_VPN_PATH = line.strip().replace("path:", "").strip()
-            print(f"path: {OPEN_VPN_PATH}")
 
         if "sendBY:" in line:
             SENDBY = line.strip().replace("sendBY:", "").strip()
-            print(f"SENDBY: {SENDBY}")
 
         if "didong:" in line:
             CHROME_PROFILE_DI_DONG_PATH = line.strip().replace("didong:", "").strip()
-            print(f"CHROME_PROFILE_DI_DONG_PATH: {CHROME_PROFILE_DI_DONG_PATH}")
 
         if "cdbr:" in line:
             CHROME_PROFILE_CDBR_PATH = line.strip().replace("cdbr:", "").strip()
-            print(f"CHROME_PROFILE_CDBR_PATH: {CHROME_PROFILE_CDBR_PATH}")
 
         if "server:" in line:
             DB_SERVER = line.strip().replace("server:", "").strip()
-            print(f"DB server: {DB_SERVER}")
