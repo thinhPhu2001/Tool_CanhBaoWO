@@ -278,7 +278,7 @@ def run_macro_and_send_message_CDBR_ZALO():
             try:
                 data_CDBR_tool_manager.run_macro(macro1)
                 print("Run macro thành công")
-                zalo.send_message_CDBR("Cảnh báo tồn TKM")
+                zalo.send_messa44ge_CDBR("Cảnh báo tồn TKM")
 
             except Exception as e:
                 print(f"CĐBR: Lỗi xảy ra trong quá trình gửi tin nhắn: {e}")

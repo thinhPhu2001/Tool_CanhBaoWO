@@ -1,27 +1,25 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from pywinauto.application import Application
-from time import sleep
 import os
+import sys
+from time import sleep
+
+from bs4 import BeautifulSoup
 from pynput.keyboard import Controller, Key
 import pyperclip
-from bs4 import BeautifulSoup
-
+from pywinauto import Desktop
+from pywinauto.application import Application
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from config import *
 from utils import *
 
-import sys
-
-# thay đôi môi trường tiếng Việt
+# Thay đổi môi trường sang tiếng Việt
 sys.stdout.reconfigure(encoding="utf-8")
 
-# tìm vị trí ô tin nhắn
-position_message_box = [1229, 1004]
 
 # Các XPath cố định
 # WHATSAPP
@@ -40,6 +38,7 @@ XPATHS_WHATSAPP = {
     "use_web": '//*[@id="fallback_block"]/div/h4/a',
     "group_name_join_chat": '//*[@id="main_block"]/h3',
     "send_button_an": '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[2]/button/span',
+    "Doan_chat_heading": '//*[@id="app"]/div/div[3]/div/div[3]/header/header/div/div[1]/h1',  # Khi trang whatsapp load xong thì dòng chữ đoạn chat sẽ hồi xong
 }
 # OUTLOOK
 XPATHS_OUTLOOK = {
@@ -104,17 +103,34 @@ class WhatsAppBot(BrowserManager):
                 EC.presence_of_element_located(
                     (
                         By.XPATH,
-                        '//*[@id="app"]/div/div[3]/div/div[3]/header/header/div/div[1]/h1',
+                        XPATHS_WHATSAPP["Doan_chat_heading"],
                     )
                 )
             )
             print("WhatsApp loaded successfully!")
+            return True
+
         except Exception as e:
             print("Error loading WhatsApp:", e)
+            return False
 
     def reload_web(self):
-        self.driver.refresh()  # Tải lại trang
-        sleep(3)  # Chờ trang tải xong
+        if self.driver.refresh():  # Tải lại trang
+            try:
+                WebDriverWait(self.driver, 200).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            XPATHS_WHATSAPP["Doan_chat_heading"],
+                        )
+                    )
+                )
+                print("WhatsApp refresh successfully!")
+                return True
+
+            except Exception as e:
+                print("Error loading WhatsApp:", e)
+                return False
 
     def find_name(self, object_name):
         """
@@ -122,7 +138,7 @@ class WhatsAppBot(BrowserManager):
         """
         try:
             # Tìm kiếm ô tìm kiếm nhóm
-            search_box = WebDriverWait(self.driver, 10).until(
+            search_box = WebDriverWait(self.driver, 100).until(
                 EC.presence_of_element_located(
                     (By.XPATH, XPATHS_WHATSAPP["search_box"])
                 )
@@ -130,13 +146,13 @@ class WhatsAppBot(BrowserManager):
 
             # Nhập tên nhóm vào ô tìm kiếm
             search_box.click()
-            search_box.send_keys(Keys.CONTROL, "a")  # Chọn tất cả nội dung
-            search_box.send_keys(Keys.BACKSPACE)  # Xoá toàn bộ nội dung
+            search_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
             search_box.send_keys(object_name)
+            print("đã nhập tên nhóm")
 
             try:
                 # Chờ danh sách kết quả xuất hiện
-                results = WebDriverWait(self.driver, 20).until(
+                results = WebDriverWait(self.driver, 100).until(
                     EC.presence_of_all_elements_located(
                         (By.XPATH, XPATHS_WHATSAPP["result_list"])
                     )
@@ -149,19 +165,16 @@ class WhatsAppBot(BrowserManager):
                         self.driver.execute_script(
                             "arguments[0].scrollIntoView(true);", result
                         )
-                        WebDriverWait(self.driver, 5).until(
+                        WebDriverWait(self.driver, 50).until(
                             EC.element_to_be_clickable(result)
-                        )
-                        result.click()
-                        check_group = WhatsAppBot.check_group_name(self, object_name)
-                        if check_group:
+                        ).click()
+
+                        if self.check_group_name(self, object_name):
                             print(f"Đã tìm và mở nhóm '{object_name}' thành công!")
                             return True
-                        else:
-                            print(
-                                f"Không tìm thấy nhóm '{object_name}' với tên chính xác."
-                            )
-                            return False
+
+                print(f"Không tìm thấy nhóm '{object_name}' với tên chính xác.")
+                return False
 
             except Exception as e:
                 # Nếu không tìm thấy danh sách kết quả, thử nhấn Enter
@@ -169,41 +182,47 @@ class WhatsAppBot(BrowserManager):
                 print(
                     f"Không tìm thấy danh sách kết quả. Đã thử nhấn Enter để mở nhóm '{object_name}'."
                 )
-                check_group = WhatsAppBot.check_group_name(self, object_name)
-                if check_group:
+
+                if self.check_group_name(object_name):
                     print(f"Đã tìm và mở nhóm '{object_name}' thành công!")
                     return True
-                else:
-                    print(f"Không tìm thấy nhóm '{object_name}' với tên chính xác.")
-                    return False
+
+                print(f"Không tìm thấy nhóm '{object_name}' với tên chính xác.")
+                return False
 
         except Exception as e:
-            print(f"Đã xảy ra lỗi: {e}")
+            print(f"❌ Lỗi trong quá trình tìm nhóm: {e}")
             return False
 
     def find_group_name(self, link):
+        """Mở liên kết nhóm và kiểm tra tên nhóm."""
+        # tham gia vào nhóm bằng đường link
         self.open_url(link)
+
         try:
-            element = WebDriverWait(self.driver, 10).until(
+            # Lấy tên nhóm từ giao diện tham gia chat
+            element = WebDriverWait(self.driver, 100).until(
                 EC.presence_of_element_located(
                     (By.XPATH, XPATHS_WHATSAPP["group_name_join_chat"])
                 )
             )
             group_name = element.text
 
-            join_group = WebDriverWait(self.driver, 10).until(
+            # Nhấn nút tham gia nhóm
+            WebDriverWait(self.driver, 100).until(
                 EC.presence_of_element_located(
                     (By.XPATH, XPATHS_WHATSAPP["join_group"])
                 )
-            )
-            join_group.click()
+            ).click()
 
             try:
-                use_web = WebDriverWait(self.driver, 10).until(
+                # Tìm nút "Sử dụng WhatsApp Web"
+                use_web = WebDriverWait(self.driver, 100).until(
                     EC.presence_of_element_located(
                         (By.XPATH, XPATHS_WHATSAPP["use_web"])
                     )
                 )
+
                 # Get the HTML of the 'use_web' element
                 use_web_html = use_web.get_attribute("outerHTML")
 
@@ -216,11 +235,12 @@ class WhatsAppBot(BrowserManager):
                 self.open_url(href_value)
 
                 try:
-                    WebDriverWait(self.driver, 200).until(
+                    # Chờ trang load xong
+                    WebDriverWait(self.driver, 300).until(
                         EC.presence_of_element_located(
                             (
                                 By.XPATH,
-                                '//*[@id="app"]/div/div[3]/div/div[3]/header/header/div/div[1]/h1',
+                                XPATHS_WHATSAPP["Doan_chat_heading"],
                             )
                         )
                     )
@@ -231,269 +251,245 @@ class WhatsAppBot(BrowserManager):
                     else:
                         print("Mở nhóm thất bại")
                         return False
+
                 except Exception as e:
-                    print(e)
+                    print(f"⚠ Lỗi khi kiểm tra nhóm: {e}")
+
             except Exception as e:
-                print(e)
+                print(f"⚠ Lỗi khi mở WhatsApp Web: {e}")
+
         except Exception as e:
-            print(e)
+            print(f"⚠ Lỗi khi lấy tên nhóm: {e}")
+
+        return False
 
     def check_group_name(self, group_name):
+        """Xác định xem nhóm mở có đúng với tên mong muốn không."""
         try:
             # hàm xác định group đã mở đúng không?
-            element = WebDriverWait(self.driver, 10).until(
+            element = WebDriverWait(self.driver, 100).until(
                 EC.presence_of_element_located(
                     (By.XPATH, XPATHS_WHATSAPP["group_title"])
                 )
             )
-            text_content = element.text
-            if text_content == group_name:
+
+            if element.text == group_name:
                 return True
+
             else:
+                print("Tên nhóm không đúng với tên đã nhập trong tìm kiếm")
                 return False
 
         except Exception as e:
-            print(f"Không có group nào mở: {e}")
+            print(f"⚠ Không có nhóm nào đang mở hoặc lỗi xảy ra: {e}")
+            return False
 
     def send_message(self, message):
+        """Gửi tinh nhắn văn bản"""
         # tìm ô tin nhắn
-        message_box = WebDriverWait(self.driver, 10).until(
+        message_box = WebDriverWait(self.driver, 100).until(
             EC.presence_of_element_located((By.XPATH, XPATHS_WHATSAPP["message_box"]))
         )
         message_box.click()
         message_box.send_keys(message)
         message_box.send_keys(Keys.ENTER)
-        sleep(1)
+        sleep(5)
 
-    def send_attached_file(self, file_path):
-        # gắn file đính kèm
-        WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located(
-                (
-                    By.XPATH,
-                    XPATHS_WHATSAPP["attached_button"],
-                )
-            )
-        )
+        self.get_last_message_info()
+
+    def send_attached_file(self, file_path: str) -> bool:
+        """
+        Gửi tệp đính kèm qua WhatsApp.
+
+        :param file_path: Đường dẫn tới tệp cần gửi.
+        :return: Trả về True nếu gửi thành công, ngược lại False.
+        """
+
         try:
-            attached_button = self.driver.find_element(
-                By.XPATH, XPATHS_WHATSAPP["attached_button"]
-            )
-            print("đã tìm thấy nút")
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError(f"File không tồn tại: {file_path}")
 
+            # chờ nút gửi xuất hiện (sau khi mở được gr/người cần nhắn tin)
+            attached_button = WebDriverWait(self.driver, 200).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, XPATHS_WHATSAPP["attached_button"])
+                )
+            )
             attached_button.click()
-            try:
-                # Chọn nút tài liệu
-                file_input = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located(
-                        (
-                            By.XPATH,
-                            '//input[@type="file"]',
-                        )  # Đường dẫn thường dùng để gửi tài liệu
-                    )
-                )
-                sleep(2)
-                try:
-                    absolute_path = os.path.abspath(
-                        file_path
-                    )  # Chuyển đường dẫn thành tuyệt đối
-                    file_input.send_keys(absolute_path)
-                    print("xong buoc lua hinh")
-                    try:
-                        # nút gửi tin nhắn
-                        send_button = WebDriverWait(self.driver, 10).until(
-                            EC.element_to_be_clickable(
-                                (
-                                    By.XPATH,
-                                    XPATHS_WHATSAPP["send_button"],
-                                )
-                            )
-                        )
-                        send_button.click()
-                        print("gui thanh cong")
-                        sleep(5)
-                    except Exception as e:
-                        print(e)
-                except Exception as e:
-                    print(e)
-            except Exception as e:
-                print(e)
-        except Exception as e:
-            print(e)
+            print("Đã tìm thấy và nhấn nút đính kèm.")
 
-    # def send_attached_img_message(self, message, file_path, tag_name=None):
-    #     message_box = WebDriverWait(self.driver, 10).until(
-    #         EC.element_to_be_clickable(
-    #             (
-    #                 By.XPATH,
-    #                 XPATHS_WHATSAPP["message_box"],
-    #             )
-    #         )
-    #     )
-    #     message_box.click()
-    #     message_box.send_keys(Keys.CONTROL, "a")  # Chọn tất cả nội dung
-    #     message_box.send_keys(Keys.BACKSPACE)  # Xoá toàn bộ nội dung
-
-    #     message_box.send_keys(message)
-    #     if tag_name:
-    #         message_box.send_keys(": @")
-    #         message_box.send_keys(remove_accents(tag_name))
-    #         sleep(3)
-    #         message_box.send_keys(Keys.TAB)
-    #         sleep(2)
-
-    #     # gắn file đính kèm
-    #     WebDriverWait(self.driver, 20).until(
-    #         EC.presence_of_element_located(
-    #             (
-    #                 By.XPATH,
-    #                 XPATHS_WHATSAPP["attached_button"],
-    #             )
-    #         )
-    #     )
-    #     try:
-    #         attached_button = self.driver.find_element(
-    #             By.XPATH, XPATHS_WHATSAPP["attached_button"]
-    #         )
-    #         print("đã tìm thấy nút")
-
-    #         attached_button.click()
-    #         try:
-    #             # Chọn nút tài liệu
-    #             file_input = WebDriverWait(self.driver, 10).until(
-    #                 EC.presence_of_element_located(
-    #                     (
-    #                         By.XPATH,
-    #                         '//*[@id="app"]/div/span[5]/div/ul/div/div/div[2]/li/div/input',
-    #                     )
-    #                 )
-    #             )
-    #             sleep(2)
-    #             try:
-    #                 absolute_path = os.path.abspath(
-    #                     file_path
-    #                 )  # Chuyển đường dẫn thành tuyệt đối
-    #                 file_input.send_keys(absolute_path)
-    #                 print("xong buoc lua hinh")
-
-    #                 try:
-    #                     # nút gửi tin nhắn
-    #                     send_button = WebDriverWait(self.driver, 10).until(
-    #                         EC.element_to_be_clickable(
-    #                             (
-    #                                 By.XPATH,
-    #                                 XPATHS_WHATSAPP["send_button"],
-    #                             )
-    #                         )
-    #                     )
-    #                     send_button.click()
-    #                     print("gui thanh cong")
-    #                     sleep(3)
-    #                     return True
-
-    #                 except Exception as e:
-    #                     print(e)
-    #                     return False
-    #             except Exception as e:
-    #                 print(e)
-    #                 return False
-    #         except Exception as e:
-    #             print(e)
-    #             return False
-    #     except Exception as e:
-    #         print(e)
-    #         return False
-
-    def send_attached_img_message(self, message, file_path, tag_name=None):
-        message_box = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable(
-                (
-                    By.XPATH,
-                    XPATHS_WHATSAPP["message_box"],
+            # Chọn nút tài liệu
+            file_input = WebDriverWait(self.driver, 100).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        '//input[@type="file"]',
+                    )  # Đường dẫn thường dùng để gửi tài liệu
                 )
             )
-        )
-        message_box.click()
-        message_box.send_keys(Keys.CONTROL, "a")  # Chọn tất cả nội dung
-        message_box.send_keys(Keys.BACKSPACE)  # Xoá toàn bộ nội dung
-
-        message_box.send_keys(message)
-        if tag_name:
-            message_box.send_keys(": @")
-            message_box.send_keys(remove_accents(tag_name))
-            sleep(3)
-            message_box.send_keys(Keys.TAB)
             sleep(2)
 
+            absolute_path = os.path.abspath(
+                file_path
+            )  # Chuyển đường dẫn thành tuyệt đối
+            file_input.send_keys(absolute_path)
+
+            # nút gửi tin nhắn
+            send_button = WebDriverWait(self.driver, 100).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_WHATSAPP["send_button"],
+                    )
+                )
+            )
+            send_button.click()
+            print("gui thanh cong")
+            sleep(5)
+
+            self.get_last_message_info()
+
+            return True
+
+        except Exception as e:
+            print(f"Lỗi khi chọn file đính kèm: {e}")
+            return False
+
+    # def send_attached_img_message(self, message, file_path, tag_name=None):
+    #     """Gửi tin nhắn + hình cùng 1 lúc"""
+
+    #     try:
+    #         message_box = WebDriverWait(self.driver, 10).until(
+    #             EC.element_to_be_clickable(
+    #                 (
+    #                     By.XPATH,
+    #                     XPATHS_WHATSAPP["message_box"],
+    #                 )
+    #             )
+    #         )
+    #         message_box.click()
+    #         # Xóa toàn bộ nội dung đang có
+    #         message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
+
+    #         # Nhập nội dung tin nhắn
+    #         message_box.send_keys(message)
+
+    #         # Nếu có tag tên
+    #         if tag_name:
+    #             message_box.send_keys(": @")
+    #             message_box.send_keys(remove_accents(tag_name))
+    #             sleep(3)
+    #             message_box.send_keys(Keys.TAB)
+    #             sleep(2)
+
+    #         copy_image_to_clipboard(file_path)
+    #         message_box.send_keys(Keys.CONTROL, "v")
+
+    #         # nút gửi tin nhắn
+    #         send_button = WebDriverWait(self.driver, 10).until(
+    #             EC.element_to_be_clickable(
+    #                 (
+    #                     By.XPATH,
+    #                     XPATHS_WHATSAPP["send_button"],
+    #                 )
+    #             )
+    #         )
+    #         send_button.click()
+    #         print("gui thanh cong")
+    #         sleep(3)
+    #         return True
+
+    #     except Exception as e:
+    #             print(f"Lỗi khi gửi tin nhắn và hình cảnh báo: {e}")
+    #             return False
+
+    def send_attached_img_message(self, message, file_path) -> bool:
+        """Gửi tin nhắn + hình cùng 1 lúc"""
+
         try:
+            message_box = WebDriverWait(self.driver, 30).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_WHATSAPP["message_box"],
+                    )
+                )
+            )
+            message_box.click()
+            # Xóa toàn bộ nội dung đang có
+            message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
+
+            # Nhập nội dung tin nhắn
+            message_box.send_keys(message)
+            sleep(2)
+
+            # gửi hình ảnh vào ô chat
             copy_image_to_clipboard(file_path)
             message_box.send_keys(Keys.CONTROL, "v")
 
-            try:
-                # nút gửi tin nhắn
-                send_button = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable(
-                        (
-                            By.XPATH,
-                            XPATHS_WHATSAPP["send_button"],
-                        )
+            # nút gửi tin nhắn
+            send_button = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_WHATSAPP["send_button"],
                     )
                 )
-                send_button.click()
-                print("gui thanh cong")
-                sleep(3)
-                return True
+            )
+            send_button.click()
+            sleep(5)
 
-            except Exception as e:
-                print(e)
-                return False
+            # Kiểm tra tin nhắn đã được gửi chưa
+            self.get_last_message_info()
+
+            return True
 
         except Exception as e:
-            print(e)
+            print(f"Lỗi khi gửi tin nhắn và hình cảnh báo: {e}")
             return False
 
-    def send_attached_img(self, file_path):
-        # gắn file đính kèm
-        WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located(
-                (
-                    By.XPATH,
-                    XPATHS_WHATSAPP["attached_button"],
-                )
-            )
-        )
+    def send_img(self, file_path) -> bool:
+        """Chỉ gửi hình"""
         try:
-            attached_button = self.driver.find_element(
-                By.XPATH, XPATHS_WHATSAPP["attached_button"]
-            )
-            print("đã tìm thấy nút")
-
-            attached_button.click()
-            try:
-                # Chọn nút tài liệu
-                file_input = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located(
-                        (
-                            By.XPATH,
-                            '//*[@id="app"]/div/span[5]/div/ul/div/div/div[2]/li/div/input',
-                        )
+            message_box = WebDriverWait(self.driver, 30).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_WHATSAPP["message_box"],
                     )
                 )
-                sleep(2)
-                try:
-                    absolute_path = os.path.abspath(
-                        file_path
-                    )  # Chuyển đường dẫn thành tuyệt đối
-                    file_input.send_keys(absolute_path)
-                    print("xong buoc lua hinh")
-                except Exception as e:
-                    print(e)
-            except Exception as e:
-                print(e)
+            )
+            message_box.click()
+            # Xóa toàn bộ nội dung đang có
+            message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
+
+            # gửi hình ảnh vào ô chat
+            copy_image_to_clipboard(file_path)
+            message_box.send_keys(Keys.CONTROL, "v")
+
+            # nút gửi tin nhắn
+            send_button = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_WHATSAPP["send_button"],
+                    )
+                )
+            )
+            send_button.click()
+            sleep(5)
+
+            # Kiểm tra tin nhắn đã được gửi chưa
+            self.get_last_message_info()
+
+            return True
+
         except Exception as e:
-            print(e)
+            print(f"Lỗi khi gửi hình ảnh: {e}")
+            return False
 
     def send_message_CDBR(self, message):
+        """Gửi tin nhắn riêng cho CDBR"""
         try:
             # tìm ô tin nhắn
             message_box = WebDriverWait(self.driver, 10).until(
@@ -503,48 +499,64 @@ class WhatsAppBot(BrowserManager):
             )
             message_box.click()
             message_box.send_keys(message)
-            message_box.send_keys()
             message_box.send_keys(Keys.CONTROL, "v")
             sleep(5)
-            try:
-                # nút gửi tin nhắn
-                send_button = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable(
-                        (
-                            By.XPATH,
-                            XPATHS_WHATSAPP["send_button"],
-                        )
-                    )
-                )
-                send_button.click()
-                print("gui thanh cong")
-                sleep(3)
-            except Exception as e:
-                print(e)
-        except Exception as e:
-            print(f"Không tìm thấy ô tin nhắn: {e}")
 
-    def send_Error_Notification(self, phone_number, message):
-        if not phone_number.startswith("+84"):
-            phone_number = "+84" + phone_number.lstrip(
-                "0"
-            )  # Loại bỏ số 0 đầu tiên và thêm mã quốc gia
-            if phone_number.endswith(".0"):
-                phone_number = phone_number.rstrip(".0")  # Loai bo dau thap phan
-
-        self.driver.get(
-            f"https://web.whatsapp.com/send?phone={phone_number}&text={message}"
-        )
-        try:
+            # nút gửi tin nhắn
             send_button = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, XPATHS_WHATSAPP["send_button_an"])
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_WHATSAPP["send_button"],
+                    )
                 )
             )
             send_button.click()
+            print("gui thanh cong")
             sleep(3)
+
         except Exception as e:
-            print(f"lỗi gửi tin nhắn báo lỗi cho bản thân: {e}")
+            print(f"Lỗi trong quá trình gửi tin nhắn CDBR: {e}")
+
+    def get_last_message_info(self):
+        """Hàm lấy thông tin tin nhắn mới nhất"""
+        try:
+            messages = self.driver.find_elements(
+                By.CSS_SELECTOR, "div.message-out"
+            )  # Chỉ lấy tin nhắn do bạn gửi
+
+            if not messages:
+                print("❌ No sent messages found.")
+                return False
+
+            last_message = messages[-1]
+
+            while True:
+                try:
+                    # Kiểm tra trạng thái tin nhắn
+                    if last_message.find_elements(
+                        By.CSS_SELECTOR, 'span[data-icon="msg-dblcheck"]'
+                    ):
+                        print("✅✅ Tin nhắn đã gửi đi và được nhận!")
+                        break
+
+                    elif last_message.find_elements(
+                        By.CSS_SELECTOR, 'span[data-icon="msg-check"]'
+                    ):
+                        print("✅ Tin nhắn đã gửi đi nhưng chưa được nhận.")
+                        sleep(5)
+                        break
+
+                except NoSuchElementException:
+                    pass
+
+                sleep(2)  # Kiểm tra lại sau 2 giây
+
+            return True
+
+        except Exception as e:
+            print("❌ Lỗi khi lấy thông tin tin nhắn:", e)
+            return False
 
 
 # Lớp ZaloBot
@@ -766,6 +778,52 @@ class ZaloBot(BrowserManager):
 
         except Exception as e:
             print(e)
+
+    def send_file_zalo(self, file_path):
+        try:
+            # Nhấn vào nút đính kèm file (THAY XPATH CHO ĐÚNG)
+            attach_button_xpath = '//*[@id="chat-box-bar-id"]/div[1]/ul/li[3]/div'  # XPath này có thể thay đổi theo Zalo
+            attach_button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, attach_button_xpath))
+            )
+            attach_button.click()
+
+            # Chờ input file xuất hiện
+            file_input_xpath = (
+                "/html/body/div[2]/div[2]/div/div/div/div"  # Xpath của input chọn file
+            )
+            file_input = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, file_input_xpath))
+            )
+            file_input.click()
+            sleep(2)
+
+            # desktop = Desktop(backend="win32")
+            # for window in desktop.windows():
+            #     print(f"🔍 {window.window_text()}")
+
+            # Tương tác với cửa sổ file picker bằng pywinauto
+            app = Application(backend="win32").connect(
+                title="Open"
+            )  # Thay bằng tiêu đề thực tế
+            dialog = app.window(title_re="Open")  # Thay bằng tiêu đề thực tế
+
+            dialog.set_focus()  # Đưa cửa sổ lên trước
+            dialog["Edit"].set_text(
+                r"C:\Users\Admin\Desktop\file.xlsx"
+            )  # Nhập đường dẫn file
+            dialog["Open"].click()  # Nhấn nút Open
+
+            # Nhấn nút gửi (THAY XPATH CHO ĐÚNG)
+            send_button = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["send_button"]))
+            )
+            send_button.click()
+
+            print("📂 File đã được gửi thành công!")
+
+        except Exception as e:
+            print(f"❌ Lỗi khi gửi file: {e}")
 
     def send_message_CDBR(self, message):
         try:

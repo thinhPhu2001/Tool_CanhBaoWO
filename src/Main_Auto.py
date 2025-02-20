@@ -62,19 +62,23 @@ if __name__ == "__main__":
     # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     # whatsapp.driver = browser.driver
     # whatsapp.access_whatsapp()
-    # whatsapp.find_group_name("https://chat.whatsapp.com/K8nUGdLAhKC9u3aqvwTauH")
-    # sleep(10)
+    # whatsapp.find_name("test 4")
+    # whatsapp.send_img(
+    #     r"D:\2-Job\Viettel\project_thu_viec\A_Tool_GGSheet\data\excel\img\tth\tinh.jpg",
+    # )
 
-    # on_openvpn()
-    # sleep(10)
-
+    # auto_process_diDong()
     # browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
-    # sleep(1000)
+    # whatsapp.driver = browser.driver
+    # sleep(2)
+    # phone_number = "0964741020"
+    # message = "hello"
+    # whatsapp.driver.get(
+    #     f"https://web.whatsapp.com/send?phone={phone_number}&text={message}"
+    # )
+    # if whatsapp.send_Error_Notification(PHONE_NUMBER, "hello"):
+    #     print("đã gửi nội dung")
+    # else:
+    #     print("chưa gửi nội dung")
 
-    # data_tool_manager.open_file()
-    # data_tool_manager.run_macro("Module2.len_cum_doi")
-    # data_tool_manager.save_file()
-    # data_tool_manager.close_all_file()
-    # auto_combines()
-
-    
+    getDB_to_excel(DATA_GNOC_RAW_PATH)

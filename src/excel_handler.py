@@ -253,10 +253,9 @@ class ExcelManager:  # win32
                                 print("Đã xử lý Macro Error.")
                                 break
                         except pyautogui.ImageNotFoundException:
-                            print("Không tìm thấy hình ảnh END button")
-
+                            pass
                 except pyautogui.ImageNotFoundException:
-                    print("Không tìm thấy hình ảnh Excel logo")
+                    pass
 
                 # Nếu không tìm thấy, thử lại sau 10 giây
                 print("Không tìm thấy lỗi. Tiếp tục quét...")
@@ -272,6 +271,7 @@ class ExcelManager:  # win32
             stop_thread.set()
             x.join()
             return True
+
         except Exception as e:
             print(f"Lỗi khi chạy macro '{macro_name}': {e}. Dừng tiếng trình!")
             stop_thread.set()

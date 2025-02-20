@@ -36,20 +36,22 @@ def getDB_to_excel(excel_gnoc_path):
         try:
             # Kết nối OpenVPN
             if not on_openvpn():
-                raise ConnectionError("Kết nối OpenVPN thất bại.")
+                sleep(10)
+                raise ConnectionError
 
-            print("Kết nối OpenVPN thành công.")
             sleep(5)
 
             # Kết nối cơ sở dữ liệu
             connection = connect_to_db()
+
             if connection is None:
                 raise ConnectionError("Kết nối Database thất bại.")
             print("Kết nối Database thành công")
 
-            # Đọc file Excel, lấy dữ liệu từ sheet "Key"
-            df = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
-            df2 = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="tinh", header=0)
+            # Đọc file Excel "config", lấy dữ liệu từ "Sheet1"
+            df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
+            # Đọc file Excel "Log", lấy dữ liệu từ "tinh"
+            df2 = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="tinh", header=0)
 
             # Lấy giá trị đầu tiên của cột "Tỉnh" (bỏ NaN nếu có)
             first_province = df["Tỉnh"].dropna().iloc[0]
@@ -88,7 +90,7 @@ def getDB_to_excel(excel_gnoc_path):
                             'SAP_Nâng cấp trạm ứng cứu thông tin'
                         );
                     """
-            print(f"Đang lấy dữ liệu của tỉnh {first_province}")
+
             # Xuất dữ liệu ra Excel
             query_to_excel(connection, query_pakh, excel_gnoc_path)
             print("Lấy file database thành công!")
@@ -106,7 +108,6 @@ def getDB_to_excel(excel_gnoc_path):
 
             # Đảm bảo tắt VPN
             off_openvpn()
-            print("Đã ngắt kết nối opvn")
 
         # Tăng số lần thử và thời gian chờ
         retries += 1
@@ -116,84 +117,51 @@ def getDB_to_excel(excel_gnoc_path):
     print("Không thể hoàn thành tác vụ sau nhiều lần thử.")
 
 
-def excel_transition_and_run_macro(
-    excel_gnoc_manager: ExcelManager, excel_tool_manager: ExcelManager
-):
+def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
     """
     Chuyển dữ liệu từ file excel gnoc raw qua qua file tool để xử lý
     """
     try:
         excel_tool_manager.open_file()
+
         if not excel_tool_manager.run_macro("Module2.DanDuLieu"):
             return False
 
         print("chuyển dữ liệu thành công")
 
-        try:
-            # xử lý dữ liệu
+        # Danh sách macro cần chạy theo thứ tự
+        macros = [
+            ("Module1.PasteFormulasAndValuesTTH_DOC", "lọc TTH_DOC"),
+            ("Module4.PasteFormulasAndValuesSimple_NhanVien", "lọc MapMucNhanVien"),
+            ("Module2.pic_cum_huyen_loop", "xuất hình cụm huyện"),
+            ("Module2.pic_TTH_doc", "xuất hình pic_TTH_doc"),
+        ]
+
+        for macro, description in macros:
             for attempt in range(3):
-                if excel_tool_manager.run_macro(
-                    "Module1.PasteFormulasAndValuesTTH_DOC"
-                ):
+                if excel_tool_manager.run_macro(macro):
                     break
                 print(
-                    f"Di động: chạy lệnh lọc TTH_DOC thất bại , thử lần {attempt + 1}"
+                    f"Di động: chạy lệnh {description} thất bại, thử lần {attempt + 1}"
                 )
             else:
-                print("Di động: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
+                print(f"Di động: Xử lý VBA '{description}' thất bại sau 3 lần thử")
                 return False
 
-            for attempt in range(3):
-                if excel_tool_manager.run_macro(
-                    "Module4.PasteFormulasAndValuesSimple_NhanVien"
-                ):
-                    break
-                print(
-                    f"Di động: chạy lệnh lọc MapMucNhanVien thất bại , thử lần {attempt + 1}"
-                )
-            else:
-                print("Di động: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
-                return False
+        print("DI ĐỘNG: Đã xử lý VBA thành công!")
+        return True
 
-            for attempt in range(3):
-                if excel_tool_manager.run_macro("Module2.pic_cum_huyen_loop"):
-                    break
-                print(
-                    f"Di động: chạy lệnh xuất hình cụm huyện thất bại , thử lần {attempt + 1}"
-                )
-            else:
-                print("Di động: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
-                return False
-
-            for attempt in range(3):
-                if excel_tool_manager.run_macro("Module2.pic_TTH_doc"):
-                    break
-                print(
-                    f"Di động: chạy lệnh xuất hình pic_TTH_doc thất bại , thử lần {attempt + 1}"
-                )
-            else:
-                print("Di động: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
-                return False
-
-            print("DI ĐỘNG: đã xử lý hàm vba thành công!!!")
-            excel_tool_manager.save_file()
-            excel_tool_manager.close_all_file()
-            return True
-
-        except Exception as e:
-            print("Lỗi khi chạy hàm xử lý VBA: {e}")
-            excel_tool_manager.save_file()
-            excel_tool_manager.close_all_file()
-            return False
     except Exception as e:
-        print(f"Lỗi khi chuyển dữ liệu hoặc mở file: '{e}'")
+        print(f"Lỗi khi xử lý VBA: {e}")
+        return False
+
+    finally:
         excel_tool_manager.save_file()
         excel_tool_manager.close_all_file()
-        return False
 
 
 # gửi thông báo cho cụm tỉnh (whatsApp)
-def send_message_cnct():
+def send_message_cnct_WSA():
     """
     gửi thông báo cấp tỉnh (whatsApp)
     """
@@ -201,7 +169,7 @@ def send_message_cnct():
     whatsapp.driver = browser.driver
 
     try:
-        df = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
+        df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
 
         for index, row in df.iloc[:1].iterrows():
             group_name = str(row["Tỉnh"]).strip() if not pd.isna(row["Tỉnh"]) else None
@@ -211,7 +179,8 @@ def send_message_cnct():
                 else None
             )
             message = row["Message"]
-            img_path = CNCT_IMG_PATH / f"tinh.jpg"
+            img_name = row["img"]
+            img_path = CNCT_IMG_PATH / f"{img_name}.jpg"
 
             # nhập tên người dùng
             temp = whatsapp.find_group_name(link)
@@ -222,6 +191,8 @@ def send_message_cnct():
                     send_mess_status = whatsapp.send_attached_img_message(
                         message, img_path
                     )
+                    whatsapp.send_attached_file(DATA_GNOC_RAW_PATH)
+
                     if send_mess_status:
                         sleep(5)
                         browser.close()
@@ -241,22 +212,18 @@ def send_message_cnct():
 
 
 #  gửi thông báo cho huyện (WhatsApp)
-def send_message_user():
+def send_message_user_WSA():
     """
     Gửi thông báo cấp huyện - cho các cụm đội kỹ thuật (WhatsApp). Chỉ tag tên giám đốc huyện
     """
-    import os
-    import pandas as pd
-    from time import sleep
-
     # Khởi động trình duyệt
     browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
     whatsapp.driver = browser.driver
     success_list = []
 
     try:
-        # Đọc file Excel
-        df = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
+        # Đọc file Excel "config", lấy dữ liệu từ "Sheet1"
+        df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
 
         for index, row in df.iloc[1:].iterrows():
             # Lấy thông tin từ từng dòng
@@ -270,8 +237,9 @@ def send_message_user():
 
             cum_doi = row["Cụm đội KT"]
             ma_nhom = row["Mã nhóm"]
+            img_name = row["img"]
             message = str(row["Message"])
-            img_path = USER_IMG_PATH / f"{ma_nhom}.jpg"
+            img_path = USER_IMG_PATH / f"{img_name}.jpg"
 
             try:
                 # Tìm nhóm
@@ -326,7 +294,7 @@ def send_message_cnct_zalo():
 
     try:
         # gửi tên nhóm theo cột cụm đội
-        df = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
+        df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
         for index, row in df.iloc[:1].iterrows():
             group_name = str(row["Tỉnh"]).strip() if not pd.isna(row["Tỉnh"]) else None
             link = (
@@ -336,7 +304,8 @@ def send_message_cnct_zalo():
             )
 
             message = row["Message"]
-            img_path = CNCT_IMG_PATH / f"tinh.jpg"
+            img_name = row["img"]
+            img_path = CNCT_IMG_PATH / f"{img_name}.jpg"
 
             zalo.find_group_name(link)
             try:
@@ -344,6 +313,7 @@ def send_message_cnct_zalo():
                     sleep(5)
                     browser.close()
                     return True
+
                 else:
                     return False
 
@@ -366,7 +336,7 @@ def send_message_user_with_TAG_zalo():
     success_list = []
 
     # gửi tên nhóm theo cột cụm đội
-    df = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
+    df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
     for index, row in df.iloc[1:].iterrows():
         link = (
             str(row["Link group"]).strip() if not pd.isna(row["Link group"]) else None
@@ -377,7 +347,8 @@ def send_message_user_with_TAG_zalo():
         cum_doi = row["Cụm đội KT"]
         ma_nhom = row["Mã nhóm"]
         message = str(row["Message"])
-        img_path = USER_IMG_PATH / f"{ma_nhom}.jpg"
+        img_name = row["img"]
+        img_path = USER_IMG_PATH / f"{img_name}.jpg"
 
         try:
             zalo.find_group_name(link)
@@ -441,181 +412,81 @@ def send_message_user_with_TAG_zalo():
     return success_list_str
 
 
-# gửi mail gồm hình ảnh và đính kèm file
-def input_mail_outlook(folder_path, subject, context):
-    """
-    Gửi mail
-
-    Args:
-        folder_path (str): địa chỉ file đính kèm
-        subject (str): tiêu đề mail
-        context: nội dung mail
-    """
-    # khởi động trình duyệt
-    browser = BrowserManager()
-    browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
-    outlook = OutLookBot()
-    outlook.driver = browser.driver
-    outlook.access_outlook()
+def process_whatsapp_notifications():
+    """Hàm gửi tin nhắn cảnh báo qua whatsApp"""
     try:
-        new_mail_button = outlook.find_new_mail_button()
-        try:
-            new_mail_button.click()
-            print("mở mail mới thành công")
-            try:
-                # nhập tên người nhận
-                df = pd.read_excel(folder_path, sheet_name="Contact")
-                # tên người gửi mail
-                for index, row in df.iterrows():
-                    user_name = row["Mail GD Tinh"]
-                    outlook.to_user(user_name)
+        # gửi thông báo cấp CNCT
+        status_process = send_message_cnct_WSA()
 
-                # tên người cc
-                for index, row in df.iterrows():
-                    user_name = row["Mail quan ly khu vuc"]
-                    outlook.cc_user(user_name)
+        if not status_process:
+            print("Gửi tin nhắn cho Tỉnh thất bại!!!")
 
-                try:
-                    outlook.input_subject_mail(subject)
-                    print("nhập tiêu đề mail thành công")
+        else:
+            print("Gửi tin nhắn cho Tỉnh thành công!!!")
 
-                    try:
-                        # đính kèm file excel
-                        outlook.send_attach_file(DATA_TOOL_MANAGEMENT_PATH)
-                        print("đã đính kèm file excel")
+    except Exception as e:
+        print(f"Lỗi khi gửi tin nhắn tỉnh: {e}")
 
-                    except Exception as e:
-                        print(f"không đính kèm được file: {e}")
+    try:
+        # gửi thông báo cấp cụm đội kt
+        list = send_message_user_WSA()
+        print(f"Đã gửi tin nhắn cho các cụm huyện {list} thành công ")
 
-                    try:
-                        outlook.input_context_mail(context)
-                        print("Hoàn tất nhập nội dung văn bản")
+    except Exception as e:
+        print(f"Lỗi khi gửi tin nhắn huyện: {e}")
+        print(e)
 
-                        try:
-                            context_box = outlook.find_context_box()
-                            context_box.send_keys(Keys.ENTER)
-                            # tìm và copy ảnh tổng BAO CAO
-                            open_and_copy_img(img_CNCT_path)
-                            sleep(2)
-                            context_box.send_keys(Keys.ENTER)
-                            sleep(1)
-                            context_box.send_keys(Keys.ENTER)
-                            print(f"dán ảnh thành công")
 
-                            try:
-                                sleep(5)
-                                outlook.click_send_mail_button()
-                                print("gửi mail thanh cong, tien hanh dong trinh duyet")
+def process_zalo_notifications():
+    """Hàm gửi tin nhắn cảnh báo qua Zalo"""
+    try:
+        # gửi thông báo cấp CNCT
+        status_process = send_message_cnct_zalo()
 
-                            except Exception as e:
-                                print(f"không bấm được nút gửi mail: {e}")
+        if not status_process:
+            print("Gửi tin nhắn cho Tỉnh thất bại!!!")
 
-                        except Exception as e:
-                            print(f"không dán được ảnh: {e}")
-
-                    except Exception as e:
-                        print(f"lỗi khi nhập nội dung văn bản: {e}")
-
-                except Exception as e:
-                    print(f"lỗi khi nhập tiêu đề mail: {e}")
-
-            except Exception as e:
-                print(f"lỗi khi tag tên người dùng: {e}")
-
-        except Exception as e:
-            print(f"lỗi khi mở mail: {e}")
+        else:
+            print("Gửi tin nhắn cho Tỉnh thành công!!!")
 
     except Exception as e:
         print(e)
 
-    finally:
-        sleep(20)
-        browser.close()
-        print("Đã đóng trình duyệt")
-
-
-def send_mail_process():
     try:
-        date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # gửi thông báo cấp cụm huyện có tag tên
+        list = send_message_user_with_TAG_zalo()
+        nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công "
+        print(nofication)
 
-        subject = "Cảnh báo tiến độ thực hiện WO tháng 12"
-        Context = f"Kính gửi BGĐ CNCT, GĐ trung tâm cụm huyện!P.VHKT báo cáo tiến độ thực hiện WO đến thời điểm: {date_time} "
-        input_mail_outlook(DATA_TOOL_MANAGEMENT_PATH, subject, Context)
-        return True
     except Exception as e:
         print(e)
-        return False
 
 
-# quá trình whatsAPP: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
+# quá trình gửi cảnh báo di động: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
 def auto_process_diDong():
     try:
+        # Xóa dữ liệu cũ
+        delete_data_folder(CNCT_IMG_PATH)
+        delete_data_folder(USER_IMG_PATH)
+
+        # lấy dữ liệu gnoc về xử lý
         getDB_to_excel(DATA_GNOC_RAW_PATH)
 
-        try:
-            # xử lý excel
-            for attempt in range(5):
-                if excel_transition_and_run_macro(
-                    data_gnoc_raw_manager, data_tool_manager
-                ):
-                    break
-                print(f"CĐBR: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
-            else:
-                print("CĐBR: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
-                return
+        # xử lý excel
+        for attempt in range(3):
+            if excel_transition_and_run_macro(data_tool_manager):
+                break
+            print(f"CĐBR: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
 
-            if SENDBY.upper() == "WHATSAPP":
-                try:
-                    # gửi thông báo cấp CNCT
-                    status_process = send_message_cnct()
-                    if not status_process:
-                        print("Gửi tin nhắn cho Tỉnh thất bại!!!")
-                    else:
-                        browser.start_browser(CHROME_PROFILE_CDBR_PATH)
-                        whatsapp.driver = browser.driver
-                        whatsapp.send_Error_Notification(
-                            PHONE_NUMBER, "Gửi tin nhắn cho Tỉnh thành công !!!"
-                        )
-                        browser.close()
-                except Exception as e:
-                    print(e)
+        else:
+            print("CĐBR: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
+            return
 
-                try:
-                    # gửi thông báo cấp cụm đội kt
-                    list = send_message_user()
-                    nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công "
-                    browser.start_browser(CHROME_PROFILE_CDBR_PATH)
-                    whatsapp.driver = browser.driver
-                    whatsapp.send_Error_Notification(PHONE_NUMBER, nofication)
-                    browser.close()
+        if SENDBY.upper() == "WHATSAPP":
+            process_whatsapp_notifications()
 
-                except Exception as e:
-                    print(e)
-
-            elif SENDBY.upper() == "ZALO":
-                try:
-                    # gửi thông báo cấp CNCT
-                    status_process = send_message_cnct_zalo()
-                    if not status_process:
-                        print("Gửi tin nhắn cho Tỉnh thất bại!!!")
-
-                    else:
-                        print("Gửi tin nhắn cho Tỉnh thành công!!!")
-
-                except Exception as e:
-                    print(e)
-
-                try:
-                    # gửi thông báo cấp cụm huyện có tag tên
-                    list = send_message_user_with_TAG_zalo()
-                    nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công "
-                    print(nofication)
-
-                except Exception as e:
-                    print(e)
-
-        except Exception as e:
-            print(e)
+        elif SENDBY.upper() == "ZALO":
+            process_zalo_notifications()
 
     except Exception as e:
         print(e)
