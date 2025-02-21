@@ -165,7 +165,8 @@ def send_message_cnct_WSA():
     """
     gửi thông báo cấp tỉnh (whatsApp)
     """
-    browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+    if not browser.is_browser_open():
+        browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
     whatsapp.driver = browser.driver
 
     try:
@@ -182,6 +183,12 @@ def send_message_cnct_WSA():
             img_name = row["img"]
             img_path = CNCT_IMG_PATH / f"{img_name}.jpg"
 
+            if not img_name or not Path(img_path).is_file():
+                print(
+                    f"⚠️ Không tìm thấy ảnh {img_path}, bỏ qua {group_name}.", end="\n\n"
+                )
+                return False
+
             # nhập tên người dùng
             temp = whatsapp.find_group_name(link)
             retries = 0
@@ -195,7 +202,6 @@ def send_message_cnct_WSA():
 
                     if send_mess_status:
                         sleep(5)
-                        browser.close()
                         return True
 
                 else:
@@ -217,7 +223,8 @@ def send_message_user_WSA():
     Gửi thông báo cấp huyện - cho các cụm đội kỹ thuật (WhatsApp). Chỉ tag tên giám đốc huyện
     """
     # Khởi động trình duyệt
-    browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+    if not browser.is_browser_open():
+        browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
     whatsapp.driver = browser.driver
     success_list = []
 
@@ -241,42 +248,48 @@ def send_message_user_WSA():
             message = str(row["Message"])
             img_path = USER_IMG_PATH / f"{img_name}.jpg"
 
+            if not img_name or not Path(img_path).is_file():
+                print(f"⚠️ Không tìm thấy ảnh {img_path}, bỏ qua {cum_doi}.", end="\n\n")
+                continue
+
             try:
                 # Tìm nhóm
-                temp = whatsapp.find_group_name(link)
                 retries = 0
                 max_retries = 5
 
                 while retries < max_retries:
-                    if temp:
+                    group_found = whatsapp.find_group_name(link)
+
+                    if group_found:
                         try:
                             # Gửi tin nhắn kèm hình ảnh
                             whatsapp.send_attached_img_message(message, img_path)
                             success_list.append(
                                 cum_doi
                             )  # Thêm cụm đội vào danh sách thành công
-                            print(f"Đã gửi thành công cho {cum_doi}.")
+
+                            print(f"Đã gửi thành công cho {cum_doi}.", end="\n\n")
+
+                            break
+
                         except Exception as e:
                             print(f"Lỗi khi gửi tin nhắn cho {cum_doi}: {e}")
-                        break
+
                     else:
                         retries += 1
                         print(
                             f"Không tìm thấy nhóm '{ma_nhom}'. Thử lại lần {retries}/{max_retries}..."
                         )
                         whatsapp.access_whatsapp()  # Tải lại trang
-                        temp = whatsapp.find_group_name(link)  # Tìm lại nhóm
+                        sleep(5)
 
             except Exception as e:
                 print(f"Lỗi khi xử lý nhóm '{ma_nhom}': {e}")
-
-        sleep(5)
 
     except Exception as e:
         print(f"Lỗi khi đọc file hoặc khởi tạo: {e}")
 
     finally:
-        browser.close()  # Đảm bảo trình duyệt được đóng
         success_list_str = ", ".join(success_list)
         return success_list_str
 
@@ -285,11 +298,10 @@ def send_message_user_WSA():
 def send_message_cnct_zalo():
     """
     gửi thông báo cấp tỉnh
-    Args:
-        message (str): tin nhắn muốn gửi
-        img_path (str): đường dẫn thư mục chứa ảnh muốn gửi
     """
-    browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+    if not browser.is_browser_open():
+        browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+
     zalo.driver = browser.driver
 
     try:
@@ -308,22 +320,19 @@ def send_message_cnct_zalo():
             img_path = CNCT_IMG_PATH / f"{img_name}.jpg"
 
             zalo.find_group_name(link)
-            try:
-                if zalo.send_attached_img_message(message, img_path, "all"):
-                    sleep(5)
-                    browser.close()
-                    return True
 
-                else:
-                    return False
+            status_message = zalo.send_attached_img_message(message, img_path, "all")
 
-            except Exception as e:
-                print(f"khong gui duoc tin nhan {e}")
-                return False
+            if status_message == "sent":
+                return "sent"
+            elif status_message == "timeout":
+                return "timeout"
+            else:
+                return "failed"
 
     except Exception as e:
-        print(f"khong tìm thấy {group_name}: {e}")
-        return False
+        print(f"❌ Lỗi: {e}")
+        return "failed"
 
 
 # gửi thông báo cấp huyện (Zalo)
@@ -331,8 +340,10 @@ def send_message_user_with_TAG_zalo():
     """
     Gửi thông báo cấp huyện - các cụm đội kĩ thuật
     """
-    browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+    if not browser.is_browser_open():
+        browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
     zalo.driver = browser.driver
+
     success_list = []
 
     # gửi tên nhóm theo cột cụm đội
@@ -345,71 +356,59 @@ def send_message_user_with_TAG_zalo():
             continue  # Bỏ qua nếu không có link nhóm
 
         cum_doi = row["Cụm đội KT"]
-        ma_nhom = row["Mã nhóm"]
         message = str(row["Message"])
         img_name = row["img"]
         img_path = USER_IMG_PATH / f"{img_name}.jpg"
 
         try:
+            # Kiểm tra xem hình ảnh có tồn tại không
+            if not os.path.isfile(img_path):
+                print(f"⚠️ Cảnh báo: Ảnh '{img_path}' không tồn tại! Bỏ qua hình ảnh.")
+                continue  # Bỏ qua nếu không có hình
+
             zalo.find_group_name(link)
             sleep(2)
 
-            try:
-                zalo.send_attached_img(img_path)
-                sleep(1)
-                print("Gửi hình thành công!!!")
+            # Gửi hình ảnh nếu có
+            zalo.send_attached_img(img_path)
+            sleep(1)
 
-                try:
-                    # gửi tin nhắn và tag tên
-                    # Tìm ô message_box trong Zalo
-                    message_box = WebDriverWait(zalo.driver, 20).until(
-                        EC.presence_of_element_located(
-                            (By.XPATH, XPATHS_ZALO["message_box"])
-                        )
-                    )
-                    message_box.click()
-                    print("Đã tìm thấy ô message_box.")
-                    message_box.send_keys(message)
-                    message_box.send_keys(" @")
-                    message_box.send_keys("all")
-                    sleep(1)
-                    message_box.send_keys(Keys.ARROW_DOWN)
-                    message_box.send_keys(Keys.ENTER)
-                    sleep(3)
-                    print("GÕ TIN NHẮN THÀNH CÔNG!!!")
+            # gửi tin nhắn và tag tên
+            # Tìm ô message_box trong Zalo
+            message_box = WebDriverWait(zalo.driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["message_box"]))
+            )
+            message_box.click()
+            message_box.send_keys(
+                Keys.CONTROL, "a", Keys.BACKSPACE
+            )  # xóa nội dung cũ nếu có
+            message_box.send_keys(message)
 
-                    try:
-                        # Nhấn nút gửi tin nhắn
-                        send_button = WebDriverWait(zalo.driver, 10).until(
-                            EC.element_to_be_clickable(
-                                (By.XPATH, XPATHS_ZALO["send_button"])
-                            )
-                        )
-                        send_button.click()
-                        print("Tin nhắn gửi thành công!!!")
-                        success_list.append(str(cum_doi))
-                        sleep(5)
+            # tag ALL
+            message_box.send_keys(" @")
+            message_box.send_keys("all")
+            sleep(1)
+            message_box.send_keys(Keys.ARROW_DOWN)
+            message_box.send_keys(Keys.ENTER)
+            sleep(3)
 
-                    except Exception as e:
-                        print(f"Không gửi được tin nhắn {e}")
-
-                except Exception as e:
-                    print(f"Lỗi gửi tin nhắn: {e}")
-
-            except Exception as e:
-                print(f"Lỗi gửi hình: {e}")
+            # Nhấn nút gửi tin nhắn
+            send_button = WebDriverWait(zalo.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, XPATHS_ZALO["send_button"]))
+            )
+            send_button.click()
+            print(f"Tin nhắn gửi đến {cum_doi} thành công!!!")
+            success_list.append(str(cum_doi))
+            sleep(5)
 
         except Exception as e:
-            print(f"khong tim được ô ser {e}")
+            print(f"⚠️ Lỗi khi gửi tin nhắn đến '{cum_doi}': {e}")
 
-    browser.close()
-    try:
-        success_list_str = ", ".join([str(item) for item in success_list])
-
-    except Exception as e:
-        print(e)
-
-    return success_list_str
+    return (
+        ", ".join(success_list)
+        if success_list
+        else "Không có cụm đội nào nhận được tin nhắn"
+    )
 
 
 def process_whatsapp_notifications():
@@ -438,32 +437,36 @@ def process_whatsapp_notifications():
 
 
 def process_zalo_notifications():
-    """Hàm gửi tin nhắn cảnh báo qua Zalo"""
+    """
+    Hàm gửi tin nhắn cảnh báo qua Zalo
+    """
     try:
         # gửi thông báo cấp CNCT
         status_process = send_message_cnct_zalo()
 
-        if not status_process:
-            print("Gửi tin nhắn cho Tỉnh thất bại!!!")
-
+        if status_process == "sent":
+            print("✅ Gửi tin nhắn cho tỉnh thành công!")
+        elif status_process == "timeout":
+            print("⏳ Vượt quá thời gian gửi tin nhắn (TỈNH)!")
         else:
-            print("Gửi tin nhắn cho Tỉnh thành công!!!")
+            print("❌ Gửi tin nhắn cho tỉnh thất bại!")
 
     except Exception as e:
-        print(e)
+        print(f"⚠️ Lỗi trong quá trình gửi thông báo cho tỉnh: {e}")
 
     try:
         # gửi thông báo cấp cụm huyện có tag tên
         list = send_message_user_with_TAG_zalo()
-        nofication = f"Đã gửi tin nhắn cho các cụm huyện {list} thành công "
-        print(nofication)
+        print(f"✅Đã gửi tin nhắn cho các cụm huyện {list} thành công ")
 
     except Exception as e:
-        print(e)
+        print(f"⚠️ Lỗi trong quá trình gửi thông báo cho các huyện: {e}")
 
 
-# quá trình gửi cảnh báo di động: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
 def auto_process_diDong():
+    """
+    Quá trình gửi cảnh báo di động: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
+    """
     try:
         # Xóa dữ liệu cũ
         delete_data_folder(CNCT_IMG_PATH)
@@ -490,7 +493,3 @@ def auto_process_diDong():
 
     except Exception as e:
         print(e)
-
-    finally:
-        if browser.driver:
-            browser.driver.quit()

@@ -59,26 +59,4 @@ if __name__ == "__main__":
     #     schedule.run_pending()
     #     sleep(3)
 
-    # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
-    # whatsapp.driver = browser.driver
-    # whatsapp.access_whatsapp()
-    # whatsapp.find_name("test 4")
-    # whatsapp.send_img(
-    #     r"D:\2-Job\Viettel\project_thu_viec\A_Tool_GGSheet\data\excel\img\tth\tinh.jpg",
-    # )
-
-    # auto_process_diDong()
-    # browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
-    # whatsapp.driver = browser.driver
-    # sleep(2)
-    # phone_number = "0964741020"
-    # message = "hello"
-    # whatsapp.driver.get(
-    #     f"https://web.whatsapp.com/send?phone={phone_number}&text={message}"
-    # )
-    # if whatsapp.send_Error_Notification(PHONE_NUMBER, "hello"):
-    #     print("đã gửi nội dung")
-    # else:
-    #     print("chưa gửi nội dung")
-
-    getDB_to_excel(DATA_GNOC_RAW_PATH)
+    

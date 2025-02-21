@@ -194,6 +194,7 @@ def getDB_to_excel_CDBR():
         # Kiểm tra kết nối OpenVPN
         if not on_openvpn():
             print("Warning: Kết nối OpenVPN thất bại.")
+            sleep(10)
             return False
 
         time.sleep(5)  # Chờ VPN ổn định

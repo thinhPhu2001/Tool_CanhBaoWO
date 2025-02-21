@@ -13,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+import time
 
 from config import *
 from utils import *
@@ -64,6 +65,9 @@ XPATHS_ZALO = {
     "group_title": '//*[@id="header"]/div[1]/div[2]/div[1]',
     "button_join_group": '//*[@id="root"]/div[1]/main/div/div[1]/div/button',
     "send_status": '//*[@id="messageViewScroll"]/div[6]/div[2]/div/div[2]/span',
+    "STR_RECEIVED": '[data-translate-inner="STR_RECEIVED"]',
+    "STR_SENDING": 'data-translate-inner="STR_SENDING"',
+    "Clock_24": 'class="fa fa-Clock_24_Line"',
 }
 
 
@@ -79,6 +83,13 @@ class BrowserManager:
         self.driver.maximize_window()
         print("mo trinh duyet thanh cong")
 
+    def is_browser_open(self):
+        """Kiểm tra trình duyệt có đang mở không."""
+        try:
+            return self.driver is not None and len(self.driver.window_handles) > 0
+        except Exception:
+            return False
+
     def open_url(self, url):
         self.driver.get(url)
 
@@ -92,6 +103,16 @@ class BrowserManager:
     def close(self):
         self.driver.quit()
         self.driver = None
+
+    def element_is_present(self, selector, by=By.CSS_SELECTOR, timeout=10):
+        """Kiểm tra phần tử có xuất hiện không"""
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((by, selector))
+            )
+            return True
+        except:
+            return False
 
 
 # Lớp WhatsAppBot
@@ -405,6 +426,9 @@ class WhatsAppBot(BrowserManager):
 
     def send_attached_img_message(self, message, file_path) -> bool:
         """Gửi tin nhắn + hình cùng 1 lúc"""
+        if not os.path.isfile(file_path):
+            print(f"⚠️ Cảnh báo: Ảnh '{file_path}' không tồn tại! Bỏ qua hình ảnh.")
+            return False  # Bỏ qua nếu không có hình
 
         try:
             message_box = WebDriverWait(self.driver, 30).until(
@@ -440,9 +464,7 @@ class WhatsAppBot(BrowserManager):
             sleep(5)
 
             # Kiểm tra tin nhắn đã được gửi chưa
-            self.get_last_message_info()
-
-            return True
+            return self.get_last_message_info()
 
         except Exception as e:
             print(f"Lỗi khi gửi tin nhắn và hình cảnh báo: {e}")
@@ -530,29 +552,29 @@ class WhatsAppBot(BrowserManager):
                 return False
 
             last_message = messages[-1]
+            start_time = time.time()
+            max_wait_time = 100
 
-            while True:
-                try:
-                    # Kiểm tra trạng thái tin nhắn
-                    if last_message.find_elements(
-                        By.CSS_SELECTOR, 'span[data-icon="msg-dblcheck"]'
-                    ):
-                        print("✅✅ Tin nhắn đã gửi đi và được nhận!")
-                        break
+            while time.time() - start_time < max_wait_time:
 
-                    elif last_message.find_elements(
-                        By.CSS_SELECTOR, 'span[data-icon="msg-check"]'
-                    ):
-                        print("✅ Tin nhắn đã gửi đi nhưng chưa được nhận.")
-                        sleep(5)
-                        break
+                # Kiểm tra trạng thái tin nhắn
+                if last_message.find_elements(
+                    By.CSS_SELECTOR, 'span[data-icon="msg-dblcheck"]'
+                ):
+                    print("✅✅ Tin nhắn đã gửi đi và được nhận!")
+                    return True
 
-                except NoSuchElementException:
-                    pass
+                elif last_message.find_elements(
+                    By.CSS_SELECTOR, 'span[data-icon="msg-check"]'
+                ):
+                    print("✅ Tin nhắn đã gửi đi nhưng chưa được nhận.")
+                    sleep(5)
+                    return True
 
                 sleep(2)  # Kiểm tra lại sau 2 giây
 
-            return True
+            print("⚠️ Quá thời gian chờ nhưng chưa có xác nhận nhận tin nhắn.")
+            return False
 
         except Exception as e:
             print("❌ Lỗi khi lấy thông tin tin nhắn:", e)
@@ -564,7 +586,39 @@ class ZaloBot(BrowserManager):
 
     def access_zalo(self):
         self.open_url(ZALO_URL)
-        print("Zalo loaded successfully!")
+        try:
+            WebDriverWait(self.driver, 200).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        XPATHS_ZALO["search_box"],
+                    )
+                )
+            )
+            print("Zalo loaded successfully!")
+            return True
+
+        except Exception as e:
+            print("Error loading Zalo:", e)
+            return False
+
+    def reload_web(self):
+        if self.driver.refresh():  # Tải lại trang
+            try:
+                WebDriverWait(self.driver, 200).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            XPATHS_ZALO["search_box"],
+                        )
+                    )
+                )
+                print("Zalo refresh successfully!")
+                return True
+
+            except Exception as e:
+                print("Error loading WhatsApp:", e)
+                return False
 
     def find_name(self, object_name, xpath_address):
         """
@@ -605,6 +659,7 @@ class ZaloBot(BrowserManager):
             return False
 
     def find_group_name(self, link):
+        """Tìm nhóm theo link mời vào nhóm"""
         try:
             self.open_url(link)
 
@@ -664,6 +719,8 @@ class ZaloBot(BrowserManager):
         message_box.send_keys(Keys.ENTER)
         sleep(1)
 
+        return self.check_last_message_status()
+
     def run_macro_and_send_message(self, driver, excel, macro, message):
         try:
             # excel.Application.Run(macro)
@@ -699,6 +756,12 @@ class ZaloBot(BrowserManager):
             print(e)
 
     def send_attached_img_message(self, message, file_path, tag_name=None):
+        """
+        gửi tin nhắn + gửi hình
+        Args:
+            message (str): tin nhắn muốn gửi
+            img_path (str): đường dẫn thư mục chứa ảnh muốn gửi
+        """
         try:
             # Kiểm tra đường dẫn ảnh
             if not os.path.isfile(file_path):
@@ -706,18 +769,17 @@ class ZaloBot(BrowserManager):
 
             copy_image_to_clipboard(file_path)
 
-            try:
-                # Tìm ô message_box trong Zalo
-                message_box = WebDriverWait(self.driver, 20).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, XPATHS_ZALO["message_box"])
-                    )
-                )
-                message_box.click()
-                message_box.send_keys(Keys.CONTROL, "a")
-                message_box.send_keys(Keys.BACKSPACE)
-                message_box.send_keys(Keys.CONTROL, "v")
-                print("dán hình vào ô tin nhắn")
+            # Tìm ô message_box trong Zalo
+            message_box = WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["message_box"]))
+            )
+            message_box.click()
+            message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
+            message_box.send_keys(Keys.CONTROL, "v")  # dán hình vào ô tin nhắn
+            sleep(2)
+
+            if tag_name:
+                # ghi tin nhắn + tag all
                 message_box.send_keys(message)
                 message_box.send_keys(" @")
                 message_box.send_keys(tag_name)
@@ -725,24 +787,25 @@ class ZaloBot(BrowserManager):
                 message_box.send_keys(Keys.ARROW_DOWN)
                 message_box.send_keys(Keys.ENTER)
                 sleep(2)
-                print("GÕ TIN NHẮN THÀNH CÔNG!!!")
+            else:
+                message_box.send_keys(message)
 
-                # Nhấn nút gửi tin nhắn
-                send_button = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, XPATHS_ZALO["send_button"]))
-                )
-                send_button.click()
-                print("Tin nhắn gửi thành công!!!")
-                sleep(5)
-                return True
+            # Nhấn nút gửi tin nhắn
+            send_button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, XPATHS_ZALO["send_button"]))
+            )
+            send_button.click()
+            sleep(2)
 
-            except Exception as e:
-                print(e)
-                return False
+            return self.check_last_message_status()
+
+        except FileNotFoundError as e:
+            print(f"❌ Lỗi: {e}")
+            return "failed"
 
         except Exception as e:
-            print(e)
-            return False
+            print(f"⚠️ Lỗi không xác định khi gửi tin nhắn: {e}")
+            return "failed"
 
     def send_img(self, message, file_path, tag_name=None):
         try:
@@ -839,6 +902,52 @@ class ZaloBot(BrowserManager):
             sleep(5)
         except Exception as e:
             print(e)
+
+    def check_last_message_status(self):
+        """Kiểm tra trạng thái tin nhắn sau khi gửi trên Zalo Web."""
+        try:
+            if self.element_is_present(
+                '[data-translate-inner="STR_RECEIVED"]', By.CSS_SELECTOR, 10
+            ):
+                return "sent"
+
+            start_time = time.time()
+            max_wait_time = 60
+
+            # Kiểm tra xem có phần tử hiển thị tin nhắn chưa được gửi đi không
+            while self.element_is_present(
+                '[data-translate-inner="STR_SENDING"]', By.CSS_SELECTOR, 1
+            ) or self.element_is_present(".fa.fa-Clock_24_Line", By.CSS_SELECTOR, 1):
+
+                sleep(1)
+                if time.time() - start_time > max_wait_time:
+                    return "timeout"
+
+            return "sent"
+
+        except Exception as e:
+            return "failed"
+
+    def get_last_message_info(self):
+        """Lấy thông tin tin nhắn cuối cùng"""
+        try:
+            messages = self.driver.find_elements(
+                By.CSS_SELECTOR, '[data-id="div_SentMsg_Text"]'
+            )
+            # Chỉ lấy tin nhắn do bạn gửi
+
+            if not messages:
+                print("❌ Không tìm thấy tin nhắn đã gửi.")
+                return False
+
+            last_message = messages[-1]
+
+            message_text = last_message.text.strip()
+            return message_text
+
+        except Exception as e:
+            print("❌ Lỗi khi lấy thông tin tin nhắn:", e)
+            return None
 
 
 class OutLookBot(BrowserManager):
