@@ -54,6 +54,10 @@ def connect_to_Db_CDBR():
     retries = 0  # Đếm số lần thử
     connected = False
 
+    tinh = pd.read_excel(DATA_CONFIG_CDBR_PATH, sheet_name="Sheet1", header=0).iloc[0][
+        "Tỉnh"
+    ]
+
     while retries < max_retries and not connected:
         try:
             with engine.connect() as connection:
@@ -61,7 +65,7 @@ def connect_to_Db_CDBR():
                 connected = True  # Đặt trạng thái thành công
 
                 # Truy vấn và xử lý dữ liệu
-                query_TKM = "select * from qlctkt.tkm_cdbr_open where `tỉnh/tp` = 'Bà Rịa Vũng Tàu' and `Dịch vụ` in ('SmartTV360 trả sau', 'FTTH', 'BoxTV360 trả sau', 'Camera', 'IPPhone', 'Multiscreen 2 chiều')"
+                query_TKM = f"select * from qlctkt.tkm_cdbr_open where `tỉnh/tp` = '{tinh}' and `Dịch vụ` in ('SmartTV360 trả sau', 'FTTH', 'BoxTV360 trả sau', 'Camera', 'IPPhone', 'Multiscreen 2 chiều')"
                 result_TKM = pd.read_sql(query_TKM, connection)
                 result_TKM["ngày tạo công việc"] = pd.to_datetime(
                     result_TKM["ngày tạo công việc"]
@@ -72,7 +76,9 @@ def connect_to_Db_CDBR():
                 result_TKM.to_excel(DATA_GNOC_TKM_PATH, index=False, engine="openpyxl")
                 print("Lấy dữ liệu TKM thành công!")
 
-                query_PAKH = "SELECT * FROM bccs.pakh_ton where `Nguồn tiếp nhận` = 'Bà Rịa Vũng Tàu'"
+                query_PAKH = (
+                    f"SELECT * FROM bccs.pakh_ton where `Nguồn tiếp nhận` = '{tinh}'"
+                )
                 result_PAKH = pd.read_sql(query_PAKH, connection)
                 result_PAKH.to_excel(
                     DATA_GNOC_PAKH_PATH, index=False, engine="openpyxl"

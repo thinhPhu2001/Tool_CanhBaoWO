@@ -76,7 +76,6 @@ class BrowserManager:
         self.driver = None
 
     def start_browser(self, profile_path):
-        print("dang mo trinh duyet")
         chrome_option = webdriver.ChromeOptions()
         chrome_option.add_argument(f"user-data-dir={profile_path}")
         self.driver = webdriver.Chrome(options=chrome_option)
@@ -267,6 +266,7 @@ class WhatsAppBot(BrowserManager):
                     )
 
                     if self.check_group_name(group_name):
+                        print("")
                         print(f"Mở nhóm [{group_name}] thành công!!!")
                         return True
                     else:
@@ -365,7 +365,6 @@ class WhatsAppBot(BrowserManager):
                 )
             )
             send_button.click()
-            print("gui thanh cong")
             sleep(5)
 
             self.get_last_message_info()
@@ -520,25 +519,30 @@ class WhatsAppBot(BrowserManager):
                 )
             )
             message_box.click()
+            message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
             message_box.send_keys(message)
             message_box.send_keys(Keys.CONTROL, "v")
             sleep(5)
 
-            # nút gửi tin nhắn
-            send_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable(
-                    (
-                        By.XPATH,
-                        XPATHS_WHATSAPP["send_button"],
+            xpaths = [XPATHS_WHATSAPP["send_button"], XPATHS_WHATSAPP["send_button_an"]]
+
+            for xpath in xpaths:
+                try:
+                    send_button = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.XPATH, xpath))
                     )
-                )
-            )
-            send_button.click()
-            print("gui thanh cong")
-            sleep(3)
+                    if send_button.is_displayed() and send_button.is_enabled():
+                        send_button.click()
+                        return self.get_last_message_info()
+
+                except:
+                    pass
+
+            return False
 
         except Exception as e:
             print(f"Lỗi trong quá trình gửi tin nhắn CDBR: {e}")
+            return False
 
     def get_last_message_info(self):
         """Hàm lấy thông tin tin nhắn mới nhất"""
@@ -662,9 +666,18 @@ class ZaloBot(BrowserManager):
         """Tìm nhóm theo link mời vào nhóm"""
         try:
             self.open_url(link)
+            # hàm xác định group đã mở đúng không?
+            element = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["group_title"]))
+            )
 
+            text_content = element.text
+
+            print(f"\nGROUP [{text_content}] DANG MỞ")
+            return True
         except Exception as e:
             print(e)
+            return False
 
     def check_group_name(self, group_name):
         try:
@@ -895,24 +908,30 @@ class ZaloBot(BrowserManager):
                 EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["message_box"]))
             )
             message_box.click()
+            message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
+
             message_box.send_keys(message)
             message_box.send_keys(Keys.CONTROL, "v")
             sleep(2)
             message_box.send_keys(Keys.ENTER)
-            sleep(5)
+
+            return self.check_last_message_status()
+
         except Exception as e:
             print(e)
+            return "failed"
 
     def check_last_message_status(self):
         """Kiểm tra trạng thái tin nhắn sau khi gửi trên Zalo Web."""
         try:
             if self.element_is_present(
-                '[data-translate-inner="STR_RECEIVED"]', By.CSS_SELECTOR, 10
+                '[data-translate-inner="STR_RECEIVED"]', By.CSS_SELECTOR, 20
             ):
+                sleep(3)
                 return "sent"
 
             start_time = time.time()
-            max_wait_time = 60
+            max_wait_time = 100
 
             # Kiểm tra xem có phần tử hiển thị tin nhắn chưa được gửi đi không
             while self.element_is_present(

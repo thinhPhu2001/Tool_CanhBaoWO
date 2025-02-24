@@ -467,6 +467,9 @@ def auto_process_diDong():
     """
     Quá trình gửi cảnh báo di động: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
     """
+    date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Bắt đầu chạy tiến trình CDBR vào lúc {date_time}")
+
     try:
         # Xóa dữ liệu cũ
         delete_data_folder(CNCT_IMG_PATH)

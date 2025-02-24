@@ -18,6 +18,7 @@ import win32con
 import threading
 import logging
 import time
+import win32com.client
 
 Image.MAX_IMAGE_PIXELS = 300000000
 stop_thread = threading.Event()
@@ -59,16 +60,18 @@ class ExcelManager:  # win32
 
     def is_file_open(self):
         """
-        Kiểm tra xem file Excel đã được mở trong ứng dụng Excel hay chưa.
+        Kiểm tra xem file Excel (.xlsm) đã được mở trong ứng dụng Excel hay chưa.
         """
         try:
-            if self.excel is not None:
-                for wb in self.excel.Workbooks:
-                    if wb.FullName == self.file_path:
-                        return True
+            excel = win32com.client.GetActiveObject("Excel.Application")
+            for wb in excel.Workbooks:
+                opened_file_name = os.path.basename(wb.FullName)
+                if opened_file_name == os.path.basename(self.file_path):
+                    return True
+
             return False
+
         except Exception as e:
-            print(f"Lỗi khi kiểm tra file đã mở: {e}")
             return False
 
     def save_file(self, save_path=None):

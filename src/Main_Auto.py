@@ -18,6 +18,12 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")
 
 
+def title_end_process(name_process):
+    print("")
+    print(f"!!!!!!!!!!!!!!!!!!!! {name_process} !!!!!!!!!!!!!!")
+    print("")
+
+
 # WhatsApp
 def auto_combines():
     """
@@ -25,23 +31,13 @@ def auto_combines():
     """
     try:
         auto_process_CDBR()
-        print("")
-        print("!!!!!!!!!!!!!!!!!!!!ĐÃ CHẠY CẢNH BÁO CĐBR !!!!!!!!!!!!!!")
-        print("")
+        title_end_process("ĐÃ CHẠY CẢNH BÁO CĐBR")
 
-        try:
-            auto_process_diDong()
-            print()
-            print("")
-            print("!!!!!!!!!!!!!!!!!!!!ĐÃ CHẠY CẢNH BÁO DI ĐỘNG !!!!!!!!!!!!!!")
-            print("")
-            print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-
-        except Exception as e:
-            print(f"Lỗi ở di động: {e}")
+        auto_process_diDong()
+        title_end_process("ĐÃ CHẠY CẢNH BÁO DI ĐỘNG")
 
     except Exception as e:
-        print(f"Lỗi ở CDBR: {e}")
+        print(f"Lỗi chạy: {e}")
 
 
 if __name__ == "__main__":
@@ -59,4 +55,10 @@ if __name__ == "__main__":
     #     schedule.run_pending()
     #     sleep(3)
 
-    
+    # Bước 3: Gửi tin nhắn qua WhatsApp hoặc Zalo
+    if SENDBY.upper() in ["WHATSAPP", "ZALO"]:
+        if not run_macro_and_send_message_CDBR(SENDBY.lower()):
+            print(f"Gửi tin nhắn qua {SENDBY} thất bại!!!")
+        print(f"Gửi tin nhắn qua {SENDBY} thành công!!!")
+    else:
+        print(f"CĐBR: Phương thức gửi '{SENDBY}' không được hỗ trợ")

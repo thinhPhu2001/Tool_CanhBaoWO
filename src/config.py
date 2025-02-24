@@ -30,6 +30,7 @@ DATA_DiDong_CONFIG_PATH = EXCEL_PATH / "data_didong" / "config.xlsb"
 DATA_GNOC_PAKH_PATH = EXCEL_PATH / "data_CDBR" / "Log ton PAKH.xlsx"
 DATA_GNOC_TKM_PATH = EXCEL_PATH / "data_CDBR" / "Log ton TKM.xlsx"
 DATA_GNOC_logGnoc_PATH = EXCEL_PATH / "data_CDBR" / "Log gnoc.xlsx"
+DATA_CONFIG_CDBR_PATH = EXCEL_PATH / "data_CDBR" / "config.xlsx"
 DATA_TOOL_MANAGEMENT_CDBR_PATH = EXCEL_PATH / "data_CDBR" / "CDBR.xlsm"
 
 # LƯU HÌNH CẢNH BÁO DI ĐỘNG
