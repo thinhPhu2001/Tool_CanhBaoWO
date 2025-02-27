@@ -49,7 +49,7 @@ if __name__ == "__main__":
     schedule.every().day.at("08:30").do(auto_process_CDBR)
     schedule.every().day.at("10:30").do(auto_process_CDBR)
     schedule.every().day.at("12:30").do(auto_combines)
-    schedule.every().day.at("14:00").do(auto_process_CDBR)
+    schedule.every().day.at("14:20").do(auto_process_CDBR)
     schedule.every().day.at("16:20").do(auto_combines)
 
     print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
@@ -62,3 +62,8 @@ if __name__ == "__main__":
     # auto_combines()
 
      # Bước 3: Gửi tin nhắn qua WhatsApp hoặc Zalo
+
+   
+
+
+    

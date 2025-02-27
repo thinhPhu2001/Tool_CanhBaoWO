@@ -412,6 +412,9 @@ def send_message_user_with_TAG_zalo():
 
 def process_whatsapp_notifications():
     """Hàm gửi tin nhắn cảnh báo qua whatsApp"""
+    if browser.is_browser_open():
+        browser.close()
+
     try:
         # gửi thông báo cấp CNCT
         status_process = send_message_cnct_WSA()
@@ -439,6 +442,9 @@ def process_zalo_notifications():
     """
     Hàm gửi tin nhắn cảnh báo qua Zalo
     """
+    if browser.is_browser_open():
+        browser.close()
+        
     try:
         # gửi thông báo cấp CNCT
         status_process = send_message_cnct_zalo()

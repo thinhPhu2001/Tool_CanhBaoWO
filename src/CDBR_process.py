@@ -104,8 +104,10 @@ def run_macro_and_send_message_CDBR(platform):
 
     messaging_service = zalo if platform == "zalo" else whatsapp
 
-    if not browser.is_browser_open():
-        browser.start_browser(CHROME_PROFILE_CDBR_PATH)
+    if browser.is_browser_open():
+        browser.close()
+        
+    browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     messaging_service.driver = browser.driver
 
     try:

@@ -102,6 +102,7 @@ class BrowserManager:
     def close(self):
         self.driver.quit()
         self.driver = None
+        sleep(5)
 
     def element_is_present(self, selector, by=By.CSS_SELECTOR, timeout=10):
         """Kiểm tra phần tử có xuất hiện không"""
