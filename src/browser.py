@@ -533,6 +533,7 @@ class WhatsAppBot(BrowserManager):
                     )
                     if send_button.is_displayed() and send_button.is_enabled():
                         send_button.click()
+                        sleep(3)
                         return self.get_last_message_info()
 
                 except:

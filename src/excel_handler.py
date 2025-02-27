@@ -232,7 +232,6 @@ class ExcelManager:  # win32
         """
 
         def turn_off_Macro_error():
-            sleep(3)
             excel_logo = str(IMAGE_PATH / "excel_logo.png")
             end_img = str(IMAGE_PATH / "end_macro.png")
 
@@ -261,7 +260,6 @@ class ExcelManager:  # win32
                     pass
 
                 # Nếu không tìm thấy, thử lại sau 10 giây
-                print("Không tìm thấy lỗi. Tiếp tục quét...")
                 sleep(3)
 
         stop_thread.clear()
@@ -269,6 +267,7 @@ class ExcelManager:  # win32
         x.start()
 
         try:
+            print(f"Chạy macro {macro_name}")
             self.excel.Application.Run(macro_name)
             print(f"Macro '{macro_name}' đã được chạy thành công!")
             stop_thread.set()
