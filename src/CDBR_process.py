@@ -57,11 +57,7 @@ def excel_process_CDBR():
     """
     try:
         # Mở Excel và thực hiện các macro xử lý dữ liệu
-        if data_CDBR_tool_manager.open_file():
-            print(f"Mở file {DATA_TOOL_MANAGEMENT_CDBR_PATH} thành công")
-        else:
-            print(f"Mở file {DATA_TOOL_MANAGEMENT_CDBR_PATH} thất bại")
-            return False
+        data_CDBR_tool_manager.open_file()
 
         macro_name = [
             "Handle_Data.XoaDuLieu",
@@ -173,6 +169,7 @@ def process_single_group(service, row, num_macro, num_mess):
         for i in range(1, num_mess + 1)  # Fix để lấy đủ message
         if pd.notna(row.get(f"mess {i}")) and row.get(f"mess {i}", "").strip()
     ]
+    
     temp = service.find_group_name(link)
     retries = 0
     max_retries = 5
