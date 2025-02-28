@@ -104,10 +104,8 @@ def run_macro_and_send_message_CDBR(platform):
 
     messaging_service = zalo if platform == "zalo" else whatsapp
 
-    if browser.is_browser_open():
-        browser.close()
-        
-    browser.start_browser(CHROME_PROFILE_CDBR_PATH)
+    if not browser.is_browser_open():
+        browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     messaging_service.driver = browser.driver
 
     try:
@@ -245,6 +243,10 @@ def auto_process_CDBR():
         else:
             print(f"CĐBR: Phương thức gửi '{SENDBY}' không được hỗ trợ")
 
+        #tắt browser sau khi chạy
+        if browser.is_browser_open():
+            browser.close()
+            
     except Exception as e:
         print(f"CĐBR - Lỗi trong quá trình xử lý: {e}")
 

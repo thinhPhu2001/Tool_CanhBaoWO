@@ -499,5 +499,8 @@ def auto_process_diDong():
         elif SENDBY.upper() == "ZALO":
             process_zalo_notifications()
 
+        if browser.is_browser_open():
+            browser.close()
+
     except Exception as e:
         print(e)
