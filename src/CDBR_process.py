@@ -7,6 +7,7 @@ from browser import *
 
 from pynput.keyboard import Controller, Key
 import schedule
+import pythoncom
 import sys
 
 # thay đôi môi trường tiếng Việt
@@ -251,9 +252,23 @@ def auto_process_CDBR():
         print(f"CĐBR - Lỗi trong quá trình xử lý: {e}")
 
     finally:
-        excel = win32com.client.GetActiveObject("Excel.Application")
+        try:
+            pythoncom.CoInitialize()  # Ensure COM is initialized in case of threading issues
 
-        for wb in excel.Workbooks:
-            if wb is not None:
-                data_CDBR_tool_manager.close_all_file()
-                break
+            excel = None
+            try:
+                excel = win32com.client.GetActiveObject("Excel.Application")
+            except Exception:
+                print("No active Excel instance found.")  # This means Excel is already closed
+                return
+
+            if excel is not None:
+                while excel.Workbooks.Count > 0:
+                    wb = excel.Workbooks(1)  # Get the first workbook
+                    wb.Close(SaveChanges=False)  # Close it without saving
+
+                excel.Quit()  # Ensure Excel itself is closed
+                print("All Excel instances closed successfully.")
+
+        except Exception as e:
+            print(f"Error during Excel cleanup: {e}")

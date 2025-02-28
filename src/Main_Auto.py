@@ -45,17 +45,17 @@ def auto_combines():
 if __name__ == "__main__":
 
     # Lên lịch chạy
-    schedule.every().day.at("06:30").do(auto_combines)
-    schedule.every().day.at("08:30").do(auto_process_CDBR)
-    schedule.every().day.at("10:30").do(auto_process_CDBR)
-    schedule.every().day.at("12:30").do(auto_combines)
-    schedule.every().day.at("14:20").do(auto_process_CDBR)
-    schedule.every().day.at("16:20").do(auto_combines)
+    # schedule.every().day.at("06:30").do(auto_combines)
+    # schedule.every().day.at("08:30").do(auto_process_CDBR)
+    # schedule.every().day.at("10:30").do(auto_process_CDBR)
+    # schedule.every().day.at("12:30").do(auto_combines)
+    # schedule.every().day.at("14:20").do(auto_process_CDBR)
+    # schedule.every().day.at("16:20").do(auto_combines)
 
-    print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    while True:
-        schedule.run_pending()
-        sleep(3)
+    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
+    # while True:
+    #     schedule.run_pending()
+    #     sleep(3)
 
     # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     # sleep(1000)
