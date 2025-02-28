@@ -56,9 +56,18 @@ if __name__ == "__main__":
     #     sleep(3)
 
     # Bước 3: Gửi tin nhắn qua WhatsApp hoặc Zalo
-    if SENDBY.upper() in ["WHATSAPP", "ZALO"]:
-        if not run_macro_and_send_message_CDBR(SENDBY.lower()):
-            print(f"Gửi tin nhắn qua {SENDBY} thất bại!!!")
-        print(f"Gửi tin nhắn qua {SENDBY} thành công!!!")
-    else:
-        print(f"CĐBR: Phương thức gửi '{SENDBY}' không được hỗ trợ")
+    # if SENDBY.upper() in ["WHATSAPP", "ZALO"]:
+    #     if not run_macro_and_send_message_CDBR(SENDBY.lower()):
+    #         print(f"Gửi tin nhắn qua {SENDBY} thất bại!!!")
+    #     print(f"Gửi tin nhắn qua {SENDBY} thành công!!!")
+    # else:
+    #     print(f"CĐBR: Phương thức gửi '{SENDBY}' không được hỗ trợ")
+
+    # on_openvpn()
+
+    if browser.is_browser_open():
+        print("dong")
+        browser.close()
+    browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+    print("di dong")
+    sleep(2)

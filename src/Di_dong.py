@@ -198,7 +198,6 @@ def send_message_cnct_WSA():
                     send_mess_status = whatsapp.send_attached_img_message(
                         message, img_path
                     )
-                    whatsapp.send_attached_file(DATA_GNOC_RAW_PATH)
 
                     if send_mess_status:
                         sleep(5)
