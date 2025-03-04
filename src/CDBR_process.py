@@ -229,7 +229,7 @@ def auto_process_CDBR():
     Quy trình chạy WhatsApp/Zalo của CĐBR
     """
     date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Bắt đầu chạy tiến trình CDBR vào lúc {date_time}")
+    print(f"\nBắt đầu chạy tiến trình CDBR vào lúc {date_time}")
 
     try:
         # Bước 1: Lấy dữ liệu từ DB vào Excel

@@ -57,8 +57,13 @@ def excel_to_ggSheet(sheet_id, new_worksheet_name, excel_path, sheet_name_excel)
             [df.columns.values.tolist()] + df.values.tolist()
         )  # Cập nhật dữ liệu
 
-        print("Hoàn thành cập nhật dữ liệu.")
+        print(f"Hoàn thành cập nhật dữ liệu cho {sheet_name_excel}.")
+        return True
+
     except FileNotFoundError:
         print(f"Tệp Excel không tồn tại tại {excel_path}")
+        return False
+
     except Exception as e:
         print(f"Lỗi: {e}")
+        return False

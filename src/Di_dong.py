@@ -4,6 +4,7 @@ from utils import *
 from openVPN import *
 from excel_handler import *
 from browser import *
+from GG_Sheet import *
 
 import shutil
 from sqlalchemy import text
@@ -18,7 +19,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 # |-- DI ĐỘNG
 data_gnoc_raw_manager = ExcelManager(DATA_GNOC_RAW_PATH)
 data_tool_manager = ExcelManager(DATA_TOOL_MANAGEMENT_PATH)
-
+data_diDong_chatBot = ExcelManager(DATA_DIDONG_ChatBot_PATH)
 # browser variable
 browser = BrowserManager()
 whatsapp = WhatsAppBot()
@@ -118,6 +119,63 @@ def getDB_to_excel(excel_gnoc_path):
         sleep(5)
 
     print("Không thể hoàn thành tác vụ sau nhiều lần thử.")
+
+
+def push_data_GGsheet():
+    try:
+        data_diDong_chatBot.open_file()
+
+        if not data_diDong_chatBot.run_macro("Module9.DanDuLieu"):
+            return False
+
+        print("chuyển dữ liệu thành công")
+
+        # Danh sách macro cần chạy theo thứ tự
+        macros = [
+            ("Module9.RUN_MapTheoTram()", "Chạy số liệu cho MAP TRẠM"),
+            ("Module9.RUN_MapMucNhanVien()", "Chạy số liệu cho NHÂN VIÊN"),
+        ]
+
+        for macro, description in macros:
+            for attempt in range(3):
+                if data_diDong_chatBot.run_macro(macro):
+                    break
+                print(
+                    f"DATA chat bot: chạy lệnh {description} thất bại, thử lần {attempt + 1}"
+                )
+            else:
+                print(
+                    f"DATA chat bot: Xử lý VBA '{description}' thất bại sau 3 lần thử"
+                )
+                return False
+
+        print("DATA chat bot: Đã xử lý VBA thành công!")
+
+        # đẩy dữ liệu TRẠM lên GG SHEET
+        excel_to_ggSheet(
+            sheet_id=GG_SHEET_ID,
+            new_worksheet_name="tram",
+            excel_path=DATA_DIDONG_ChatBot_PATH,
+            sheet_name_excel="MAP THEO TRAM",
+        )
+
+        # đẩy dữ liệu NHÂN VIÊN lên GG SHEET
+        excel_to_ggSheet(
+            sheet_id=GG_SHEET_ID,
+            new_worksheet_name="FT",
+            excel_path=DATA_DIDONG_ChatBot_PATH,
+            sheet_name_excel="MAP Muc Nhan Vien",
+        )
+
+        return True
+
+    except Exception as e:
+        print(f"Lỗi khi đẩy dữ liệu lên ggSheet: {e}")
+        return False
+
+    finally:
+        data_diDong_chatBot.save_file()
+        data_diDong_chatBot.close_all_file()
 
 
 def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
@@ -476,7 +534,7 @@ def auto_process_diDong():
     Quá trình gửi cảnh báo di động: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
     """
     date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Bắt đầu chạy tiến trình CDBR vào lúc {date_time}")
+    print(f"\nBắt đầu chạy tiến trình Di động vào lúc {date_time}")
 
     try:
         # Xóa dữ liệu cũ
@@ -490,24 +548,35 @@ def auto_process_diDong():
             print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
             return
 
-        # xử lý excel
+        # đẩy dữ liệu lên ggsheet
         for attempt in range(3):
-            if excel_transition_and_run_macro(data_tool_manager):
+            if push_data_GGsheet():
                 break
-            print(f"CĐBR: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
-
+            print(f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
         else:
-            print("CĐBR: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
-            return
+            print(
+                f"\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, \nKhông gửi dữ liệu lên GGsheet được\n"
+            )
 
-        if SENDBY.upper() == "WHATSAPP":
-            process_whatsapp_notifications()
+        # # xử lý excel
+        # for attempt in range(3):
+        #     if excel_transition_and_run_macro(data_tool_manager):
+        #         break
+        #     print(f"DI động: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
 
-        elif SENDBY.upper() == "ZALO":
-            process_zalo_notifications()
+        # else:
+        #     print("DI động: Xử lý dữ liệu Excel thất bại sau 3 lần thử")
+        #     return
 
-        if browser.is_browser_open():
-            browser.close()
+        # #gửi tin nhắn
+        # if SENDBY.upper() == "WHATSAPP":
+        #     process_whatsapp_notifications()
+
+        # elif SENDBY.upper() == "ZALO":
+        #     process_zalo_notifications()
+
+        # if browser.is_browser_open():
+        #     browser.close()
 
     except Exception as e:
         print(e)
