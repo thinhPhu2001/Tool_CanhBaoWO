@@ -4,7 +4,7 @@ from utils import *
 from openVPN import *
 from excel_handler import *
 from browser import *
-
+from GG_Sheet import *
 from CDBR_process import *
 from Di_dong import *
 
@@ -16,6 +16,16 @@ import sys
 
 # thay đôi môi trường tiếng Việt
 sys.stdout.reconfigure(encoding="utf-8")
+
+time_shift = {
+    "First": {"start": "06:20"},
+    "Second": {"start": "08:30"},
+    "Third": {"start": "10:30"},
+    "Fourth": {"start": "12:10"},
+    "Fifth": {"start": "14:20"},
+    "Sixth": {"start": "16:20"},
+    "Seventh": {"start": "19:20"},
+}
 
 
 def title_end_process(name_process):
@@ -45,25 +55,18 @@ def auto_combines():
 if __name__ == "__main__":
 
     # Lên lịch chạy
-    # schedule.every().day.at("06:30").do(auto_combines)
-    # schedule.every().day.at("08:30").do(auto_process_CDBR)
-    # schedule.every().day.at("10:30").do(auto_process_CDBR)
-    # schedule.every().day.at("12:30").do(auto_combines)
-    # schedule.every().day.at("14:20").do(auto_process_CDBR)
-    # schedule.every().day.at("16:20").do(auto_combines)
+    schedule.every().day.at(time_shift["First"]["start"]).do(auto_combines)
+    schedule.every().day.at(time_shift["Second"]["start"]).do(auto_process_CDBR)
+    schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR)
+    schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines)
+    schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR)
+    schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_combines)
 
-    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    # while True:
-    #     schedule.run_pending()
-    #     sleep(3)
+    print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
+    while True:
+        schedule.run_pending()
+        sleep(3)
 
     # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
     # sleep(1000)
     # auto_combines()
-
-     # Bước 3: Gửi tin nhắn qua WhatsApp hoặc Zalo
-
-   
-
-
-    

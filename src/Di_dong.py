@@ -64,6 +64,8 @@ def getDB_to_excel(excel_gnoc_path):
             # Chuyển danh sách các nhóm thành chuỗi SQL
             groups_sql = ", ".join(f"'{group}'" for group in groups)
 
+            # groups_sql = ", ".join(df2["Nhóm điều phối"].dropna().astype(str))
+
             # Tạo câu truy vấn SQL
             query_pakh = f"""
                     SELECT *
@@ -88,7 +90,8 @@ def getDB_to_excel(excel_gnoc_path):
                             'SAP_điều chuyển nâng cấp',
                             'SAP_Hạ cấp thu hồi',
                             'SAP_Nâng cấp trạm ứng cứu thông tin'
-                        );
+                        )
+                        AND `Nhân viên khởi tạo` NOT IN ('hongnt38');
                     """
 
             # Xuất dữ liệu ra Excel
@@ -444,7 +447,7 @@ def process_zalo_notifications():
     """
     if browser.is_browser_open():
         browser.close()
-        
+
     try:
         # gửi thông báo cấp CNCT
         status_process = send_message_cnct_zalo()
@@ -482,6 +485,10 @@ def auto_process_diDong():
 
         # lấy dữ liệu gnoc về xử lý
         getDB_to_excel(DATA_GNOC_RAW_PATH)
+
+        if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
+            print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
+            return
 
         # xử lý excel
         for attempt in range(3):

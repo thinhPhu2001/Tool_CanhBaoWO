@@ -25,6 +25,9 @@ EXCEL_PATH = project_dir / "data" / "excel"
 DATA_GNOC_RAW_PATH = EXCEL_PATH / "data_didong" / "data_GNOC_raw.xlsx"
 DATA_TOOL_MANAGEMENT_PATH = EXCEL_PATH / "data_didong" / "Log_ton_GNOC_date.xlsb"
 DATA_DiDong_CONFIG_PATH = EXCEL_PATH / "data_didong" / "config.xlsb"
+DATA_DIDONG_ChatBot_PATH = (
+    EXCEL_PATH / "data_didong" / "BDG_CANH BAO WO _BDG_ALL GNOC T01_2025.xlsb"
+)
 
 # thư mục dữ liệu CĐBR
 DATA_GNOC_PAKH_PATH = EXCEL_PATH / "data_CDBR" / "Log ton PAKH.xlsx"
@@ -40,13 +43,8 @@ USER_IMG_PATH = EXCEL_PATH / "img" / "cum_huyen"
 SRC_PATH = project_dir / "src"
 MAIN_PATH = project_dir / "src" / "Main_Auto.py"
 
-# # Tìm tất cả các file có đuôi .ovpn trong thư mục "opvn"
-# ovpn_files = glob.glob(str(project_dir / "data" / "opvn" / "*.ovpn"))
-# if ovpn_files is None:
-#     print(f"Không tìm thấy file ovpn")
-# else:
-#     OPEN_VPN_PROFILE_PATH = Path(ovpn_files[0])
-#     print(f"đường dẫn ovpn profile: {OPEN_VPN_PROFILE_PATH}")
+# Credentials Email API
+cre_path = project_dir / "credentials.json"
 
 # Đọc file cấu hình OpenVPN
 OPEN_VPN_CONFIG_PATH = project_dir / "config.txt"
@@ -61,6 +59,7 @@ config = {
     "didong:": None,
     "cdbr:": None,
     "server:": None,
+    "GGSheet ID:": None,
 }
 
 with open(OPEN_VPN_CONFIG_PATH, "r") as file:
@@ -79,3 +78,4 @@ SENDBY = config["sendBY:"]
 CHROME_PROFILE_DI_DONG_PATH = config["didong:"]
 CHROME_PROFILE_CDBR_PATH = config["cdbr:"]
 DB_SERVER = config["server:"]
+GG_SHEET_ID = config["GGSheet ID:"]
