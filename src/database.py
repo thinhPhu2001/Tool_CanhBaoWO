@@ -11,12 +11,21 @@ from time import sleep
 from datetime import datetime, timedelta
 
 from config import *
-from Main_Auto import time_shift
 
 import sys
 
 # Đảm bảo in tiếng Việt không bị lỗi
 sys.stdout.reconfigure(encoding="utf-8")
+
+time_shift = {
+    "First": {"start": "06:20"},
+    "Second": {"start": "08:30"},
+    "Third": {"start": "10:30"},
+    "Fourth": {"start": "12:10"},
+    "Fifth": {"start": "14:20"},
+    "Sixth": {"start": "16:20"},
+    "Seventh": {"start": "19:20"},
+}
 
 
 def connect_to_db():
