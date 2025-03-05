@@ -13,6 +13,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 WHATSAPP_URL = "https://web.whatsapp.com/"
 ZALO_URL = "https://id.zalo.me/account?continue=https%3A%2F%2Fchat.zalo.me%2F"
 OUT_LOOK_URL = "https://outlook.office.com/mail/"
+GNOC_URL = "http://10.255.58.201:9000/#/dashboard"
 
 # Lấy đường dẫn thư mục gốc của project
 project_dir = Path(__file__).resolve().parent.parent  # Thư mục cha của 'src'
@@ -28,6 +29,7 @@ DATA_DiDong_CONFIG_PATH = EXCEL_PATH / "data_didong" / "config.xlsb"
 DATA_DIDONG_ChatBot_PATH = (
     EXCEL_PATH / "data_didong" / "BDG_CANH BAO WO _BDG_ALL GNOC T01_2025.xlsb"
 )
+DATA_WO_DONG_PATH = EXCEL_PATH / "data_didong" / "WO_dong"
 
 # thư mục dữ liệu CĐBR
 DATA_GNOC_PAKH_PATH = EXCEL_PATH / "data_CDBR" / "Log ton PAKH.xlsx"

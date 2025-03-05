@@ -25,6 +25,7 @@ browser = BrowserManager()
 whatsapp = WhatsAppBot()
 outlook = OutLookBot()
 zalo = ZaloBot()
+gnoc = GnocBot()
 
 img_CNCT_path = CNCT_IMG_PATH / "tinh.jpg"  # đỉa chỉ gửi hình tỉnh
 
@@ -94,7 +95,6 @@ def getDB_to_excel(excel_gnoc_path):
                         )
                         AND `Nhân viên khởi tạo` NOT IN ('hongnt38');
                     """
-
             # Xuất dữ liệu ra Excel
             query_to_excel(connection, query_pakh, excel_gnoc_path)
             print("Lấy file database thành công!")
@@ -121,11 +121,59 @@ def getDB_to_excel(excel_gnoc_path):
     print("Không thể hoàn thành tác vụ sau nhiều lần thử.")
 
 
+def get_WO_dong():
+    """
+    Lấy dữ liệu đóng trên web gnoc
+    """
+    max_retries = 3
+    retries = 0
+    while retries < max_retries:
+        try:
+            delete_data_folder(DATA_WO_DONG_PATH)
+
+            if not on_openvpn():
+                raise ConnectionError
+
+            if not browser.is_browser_open():
+                browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+
+            gnoc.driver = browser.driver
+            if not gnoc.access():
+                return False
+
+            sleep(5)
+
+            if gnoc.get_WoDong():
+                return True
+
+        except ConnectionError as ce:
+            print(f"Lỗi kết nối: {ce}")
+
+        except Exception as e:
+            print(f"lỗi khi lấy dữ liệu Wo đóng {e}")
+            return False
+
+        finally:
+            browser.close()
+            # Đảm bảo tắt VPN
+            off_openvpn()
+
+        # Tăng số lần thử và thời gian chờ
+        retries += 1
+        print(f"Thử lại lần thứ {retries} sau 5 giây...")
+        sleep(5)
+
+    print("không thành công sau nhiều lần thử!!!")
+
+
 def push_data_GGsheet():
     try:
         data_diDong_chatBot.open_file()
 
         if not data_diDong_chatBot.run_macro("Module9.DanDuLieu"):
+            return False
+
+        if not data_diDong_chatBot.run_macro("Module9.DanDuLieu2"):
             return False
 
         print("chuyển dữ liệu thành công")
@@ -544,19 +592,32 @@ def auto_process_diDong():
         # lấy dữ liệu gnoc về xử lý
         getDB_to_excel(DATA_GNOC_RAW_PATH)
 
+        for tempt in range(3):
+            if get_WO_dong():
+                print("Lấy dữ liệu WO dong thành công!")
+
+                # Thử đẩy dữ liệu lên Google Sheet
+                for attempt in range(3):
+                    if push_data_GGsheet():
+                        print("Dữ liệu đã được gửi lên Google Sheet thành công!")
+                        break  # Nếu thành công, thoát vòng lặp nội
+                    print(
+                        f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}"
+                    )
+                else:
+                    print(
+                        "\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, không gửi dữ liệu lên GGsheet được\n"
+                    )
+
+                break  # Nếu lấy dữ liệu thành công, không chạy lại nữa
+
+            print(f"Lấy dữ liệu WO dong thất bại, thử lần {tempt + 1}")
+        else:
+            print("\nLấy dữ liệu WO dong thất bại sau 3 lần thử\n")
+
         if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
             print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
             return
-
-        # đẩy dữ liệu lên ggsheet
-        for attempt in range(3):
-            if push_data_GGsheet():
-                break
-            print(f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
-        else:
-            print(
-                f"\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, \nKhông gửi dữ liệu lên GGsheet được\n"
-            )
 
         # # xử lý excel
         # for attempt in range(3):

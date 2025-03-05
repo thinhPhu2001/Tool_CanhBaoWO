@@ -156,3 +156,17 @@ def delete_data_folder(folder_path):
         print("Đã xóa hết dữ liệu trong thư mục.")
     else:
         print("Thư mục không tồn tại.")
+
+
+def Click_byImage(img_name):
+    try:
+        img_path = str(IMAGE_PATH / f"{img_name}.png")
+        element = pyautogui.locateOnScreen(img_path, confidence=0.8)
+
+        if not element:
+            return False
+        pyautogui.click(pyautogui.center(element))
+        sleep(2)
+        return True
+    except pyautogui.ImageNotFoundException:
+        return False

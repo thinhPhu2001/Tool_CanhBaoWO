@@ -45,22 +45,25 @@ def auto_combines():
 if __name__ == "__main__":
 
     # Lên lịch chạy
-    schedule.every().day.at(time_shift["First"]["start"]).do(auto_combines)
-    schedule.every().day.at(time_shift["Second"]["start"]).do(auto_process_CDBR)
-    schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR)
-    schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines)
-    schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR)
-    schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_combines)
-    schedule.every().day.at(time_shift["Seventh"]["start"]).do(auto_combines)
+    # schedule.every().day.at(time_shift["First"]["start"]).do(auto_combines)
+    # schedule.every().day.at(time_shift["Second"]["start"]).do(auto_process_CDBR)
+    # schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR)
+    # schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines)
+    # schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR)
+    # schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_combines)
+    # schedule.every().day.at(time_shift["Seventh"]["start"]).do(auto_combines)
 
-    print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    while True:
-        schedule.run_pending()
-        sleep(3)
-
+    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
+    # while True:
+    #     schedule.run_pending()
+    #     sleep(3)
+    # on_openvpn()
     # browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
+    # gnoc.driver = browser.driver
+    # gnoc.access()
     # sleep(1000)
-    # auto_combines()
 
-    # auto_process_diDong()
-    # auto_process_CDBR()
+    if get_WO_dong():
+        print("✔ Xuất dữ liệu Wo Dong thành công!")
+    else:
+        print("❌ Xuất dữ liệu Wo Dong thất bại!")

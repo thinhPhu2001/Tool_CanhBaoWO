@@ -14,6 +14,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 import time
+from datetime import datetime, timedelta
+
 
 from config import *
 from utils import *
@@ -68,6 +70,16 @@ XPATHS_ZALO = {
     "STR_RECEIVED": '[data-translate-inner="STR_RECEIVED"]',
     "STR_SENDING": 'data-translate-inner="STR_SENDING"',
     "Clock_24": 'class="fa fa-Clock_24_Line"',
+}
+
+XPATHS_GNOC = {
+    "QuanLyCongViec": '//*[@id="root"]/div/div[2]/div[3]/div/div/ul/li[2]/a',
+    "FlagIcon": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[2]/div/div[1]/div[3]/div[1]/div/div[3]/div/span[1]/span',
+    "trangThai_mo_rong": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[2]/div/div[1]/div[2]/div/div[5]/div/div[1]/div/div[2]/div[2]/div[2]/svg',
+    "trangThai_X_button": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[2]/div/div[1]/div[2]/div/div[5]/div/div[1]/div/div[2]/div[2]/div[1]/svg',
+    "trangThai_lua_chon": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[2]/div/div[1]/div[2]/div/div[5]/div/div[1]/div/div[1]/div[1]',
+    "trangThai_dong": "/html/body/script[3]",
+    "export_button": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[1]/div/div[2]/div/button[4]',
 }
 
 
@@ -1120,3 +1132,134 @@ class OutLookBot(BrowserManager):
             sleep(3)
         except Exception as e:
             print(f"Lỗi trong quá trình đính kèm file: {e}")
+
+
+class GnocBot(BrowserManager):
+    def access(self):
+        self.open_url(GNOC_URL)
+        try:
+            WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        XPATHS_GNOC["QuanLyCongViec"],
+                    )
+                )
+            )
+            print("Gnoc loaded successfully!")
+            return True
+
+        except Exception as e:
+            print(f"Chưa đăng nhập Gnoc")
+
+            if not Click_byImage("user_gnoc"):
+                return False
+
+            pyautogui.typewrite("Tuantv53")
+
+            if not Click_byImage("pwd_gnoc"):
+                return False
+
+            pyautogui.typewrite("Pvhkt@2025")
+
+            if not Click_byImage("Dang_nhap_gnoc"):
+                return False
+
+            print("Đăng nhập gnoc thành công!!!")
+            return True
+
+    def get_WoDong(self):
+        try:
+            if not Click_byImage("quanLyCongViec"):
+                print("Lỗi không chọn được QLCV")
+                return False
+
+            time_out = 100
+            time_wait = 100
+            wait = WebDriverWait(self.driver, time_wait)
+            wait.until(
+                EC.invisibility_of_element_located(
+                    (By.XPATH, '//div[contains(text(), "Đang tải")]')
+                )
+            )
+
+            if not Click_byImage("TrangThai_lua_chon"):
+                print("Lỗi không chọn được TrangThai_lua_chon")
+                return False
+
+            pyautogui.typewrite(" Đóng")
+            sleep(2)
+
+            if not Click_byImage("dong"):
+                return False
+
+            if not Click_byImage("calender_icon"):
+                return False
+
+            new_date = (datetime.now() - timedelta(days=2)).strftime(
+                "%d/%m/%Y 00:00:00"
+            )
+
+            sleep(2)
+            input_element = self.driver.find_element(By.ID, "DateTimeInput_start")
+            input_element.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
+            input_element.send_keys(new_date)
+            input_element.send_keys(Keys.RETURN)
+            sleep(2)
+
+            if not Click_byImage("chon"):
+                return False
+
+            if not Click_byImage("tim_kiem"):
+                return False
+
+            wait = WebDriverWait(self.driver, time_wait)
+            wait.until(
+                EC.invisibility_of_element_located(
+                    (By.XPATH, '//div[contains(text(), "Đang tải")]')
+                )
+            )
+
+            export_button = WebDriverWait(self.driver, time_out).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_GNOC["export_button"],
+                    )
+                )
+            )
+            export_button.click()
+
+            wait = WebDriverWait(self.driver, time_wait)
+            wait.until(
+                EC.invisibility_of_element_located(
+                    (By.XPATH, '//div[contains(text(), "Đang tải")]')
+                )
+            )
+
+            start_time = time.time()  # Lưu thời gian bắt đầu
+
+            while time.time() - start_time < 200:  # Lặp trong 200 giây
+                try:
+                    Export_thanhCong_path = str(IMAGE_PATH / "Export_thanhCong.png")
+                    Export_thanhCong_img = pyautogui.locateOnScreen(
+                        Export_thanhCong_path, confidence=0.8
+                    )
+
+                    if Export_thanhCong_img:
+                        if not Click_byImage("Keep"):
+                            return False
+
+                        return True
+
+                except pyautogui.ImageNotFoundException:
+                    pass  # Nếu không tìm thấy, tiếp tục lặp
+
+                time.sleep(1)  # Nghỉ 1 giây trước khi thử lại
+
+            print("❌ Hết thời gian chờ!")  # Debug khi timeout
+            return False  # Hết thời gian mà vẫn chưa tìm thấy ảnh
+
+        except Exception as e:
+            print(f"Lỗi khi lấy dữ liệu gnoc web: {e}")
+            return False
