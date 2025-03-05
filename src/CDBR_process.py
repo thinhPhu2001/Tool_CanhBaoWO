@@ -128,6 +128,9 @@ def run_macro_and_send_message_CDBR(platform):
         return False
 
     finally:
+        sleep(5)
+        data_CDBR_tool_manager.run_macro("Module1.End_ALL_autoFill")
+        sleep(2)
         data_CDBR_tool_manager.save_file()
         data_CDBR_tool_manager.close_all_file()
 
@@ -214,7 +217,7 @@ def check_all_data_time():
     """
     Kiểm tra tất cả file dữ liệu gnoc lấy về là mới hay cũ
     """
-    file_gnocs = [DATA_GNOC_PAKH_PATH, DATA_GNOC_TKM_PATH, DATA_GNOC_logGnoc_PATH]
+    file_gnocs = [DATA_GNOC_PAKH_PATH, DATA_GNOC_TKM_PATH]
     for file_gnoc in file_gnocs:
         if not check_old_data(file_gnoc, time_geted=2.15):
             print(f"Dữ liệu cũ: {file_gnoc}")
