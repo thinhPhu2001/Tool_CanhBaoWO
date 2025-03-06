@@ -166,7 +166,7 @@ def Click_byImage(img_name):
         if not element:
             return False
         pyautogui.click(pyautogui.center(element))
-        sleep(2)
+        sleep(4)
         return True
     except pyautogui.ImageNotFoundException:
         return False

@@ -1182,7 +1182,7 @@ class GnocBot(BrowserManager):
                     (By.XPATH, '//div[contains(text(), "Đang tải")]')
                 )
             )
-
+            sleep(2)
             if not Click_byImage("TrangThai_lua_chon"):
                 print("Lỗi không chọn được TrangThai_lua_chon")
                 return False
@@ -1196,7 +1196,7 @@ class GnocBot(BrowserManager):
             if not Click_byImage("calender_icon"):
                 return False
 
-            new_date = (datetime.now() - timedelta(days=2)).strftime(
+            new_date = (datetime.now() - timedelta(days=1)).strftime(
                 "%d/%m/%Y 00:00:00"
             )
 
@@ -1248,6 +1248,7 @@ class GnocBot(BrowserManager):
 
                     if Export_thanhCong_img:
                         if not Click_byImage("Keep"):
+                            sleep(30)
                             return False
 
                         return True

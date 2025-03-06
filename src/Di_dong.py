@@ -154,6 +154,7 @@ def get_WO_dong():
             return False
 
         finally:
+            sleep(10)
             browser.close()
             # Đảm bảo tắt VPN
             off_openvpn()
@@ -592,52 +593,52 @@ def auto_process_diDong():
         # lấy dữ liệu gnoc về xử lý
         getDB_to_excel(DATA_GNOC_RAW_PATH)
 
-        for tempt in range(3):
-            if get_WO_dong():
-                print("Lấy dữ liệu WO dong thành công!")
+        # for tempt in range(3):
+        #     if get_WO_dong():
+        #         print("Lấy dữ liệu WO dong thành công!")
 
-                # Thử đẩy dữ liệu lên Google Sheet
-                for attempt in range(3):
-                    if push_data_GGsheet():
-                        print("Dữ liệu đã được gửi lên Google Sheet thành công!")
-                        break  # Nếu thành công, thoát vòng lặp nội
-                    print(
-                        f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}"
-                    )
-                else:
-                    print(
-                        "\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, không gửi dữ liệu lên GGsheet được\n"
-                    )
+        #         # Thử đẩy dữ liệu lên Google Sheet
+        #         for attempt in range(3):
+        #             if push_data_GGsheet():
+        #                 print("Dữ liệu đã được gửi lên Google Sheet thành công!")
+        #                 break  # Nếu thành công, thoát vòng lặp nội
+        #             print(
+        #                 f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}"
+        #             )
+        #         else:
+        #             print(
+        #                 "\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, không gửi dữ liệu lên GGsheet được\n"
+        #             )
 
-                break  # Nếu lấy dữ liệu thành công, không chạy lại nữa
+        #         break  # Nếu lấy dữ liệu thành công, không chạy lại nữa
 
-            print(f"Lấy dữ liệu WO dong thất bại, thử lần {tempt + 1}")
-        else:
-            print("\nLấy dữ liệu WO dong thất bại sau 3 lần thử\n")
+        #     print(f"Lấy dữ liệu WO dong thất bại, thử lần {tempt + 1}")
+        # else:
+        #     print("\nLấy dữ liệu WO dong thất bại sau 3 lần thử\n")
 
         if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
             print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
             return
 
-        # # xử lý excel
-        # for attempt in range(3):
-        #     if excel_transition_and_run_macro(data_tool_manager):
-        #         break
-        #     print(f"DI động: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
+        # xử lý excel
+        for attempt in range(3):
+            if excel_transition_and_run_macro(data_tool_manager):
+                break
+            print(f"DI động: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
 
-        # else:
-        #     print("DI động: Xử lý dữ liệu Excel thất bại sau 3 lần thử")
-        #     return
+        else:
+            print("DI động: Xử lý dữ liệu Excel thất bại sau 3 lần thử")
+            return
 
-        # #gửi tin nhắn
-        # if SENDBY.upper() == "WHATSAPP":
-        #     process_whatsapp_notifications()
+        #gửi tin nhắn
+        if SENDBY.upper() == "WHATSAPP":
+            process_whatsapp_notifications()
 
-        # elif SENDBY.upper() == "ZALO":
-        #     process_zalo_notifications()
+        elif SENDBY.upper() == "ZALO":
+            process_zalo_notifications()
 
-        # if browser.is_browser_open():
-        #     browser.close()
+        if browser.is_browser_open():
+            browser.close()
 
     except Exception as e:
         print(e)
