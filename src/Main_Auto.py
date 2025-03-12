@@ -45,25 +45,36 @@ def auto_combines():
 if __name__ == "__main__":
 
     # Lên lịch chạy
-    schedule.every().day.at(time_shift["First"]["start"]).do(auto_combines) #6:20
-    schedule.every().day.at(time_shift["Second"]["start"]).do(auto_process_CDBR) #8:30
-    schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR) #10:30
-    schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines) #12:10
-    schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR) #14:20
-    schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_combines) #16:20
-    schedule.every().day.at(time_shift["Seventh"]["start"]).do(auto_process_CDBR) #19:20
+    # schedule.every().day.at(time_shift["First"]["start"]).do(auto_process_CDBR) #6:30
+    # schedule.every().day.at(time_shift["Second"]["start"]).do(auto_combines) #8:30
+    # schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR) #10:30
+    # schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines) #12:10
+    # schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR) #14:20
+    # schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_process_CDBR) #16:20
+    # schedule.every().day.at(time_shift["Seventh"]["start"]).do(auto_process_CDBR) #19:20
 
-    print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    while True:
-        schedule.run_pending()
-        sleep(3)
-    # on_openvpn()
+    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
+    # while True:
+    #     schedule.run_pending()
+    #     sleep(3)
+    
     # browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
     # gnoc.driver = browser.driver
     # sleep(1000)
+    # on_openvpn()
 
-
-    # get_WO_dong()
-    # auto_process_diDong()
     # auto_process_CDBR()
-      
+    # auto_process_diDong()
+    # excel_transition_and_run_macro(data_tool_manager)
+    push_data_GGsheet()
+
+
+    # sleep(900)
+    # data_tool_manager.open_file()
+    # sleep(80)
+    # data_tool_manager.save_file()
+    # data_tool_manager.close_all_file()
+
+
+    
+   

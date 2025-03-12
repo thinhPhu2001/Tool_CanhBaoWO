@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 
 from config import *
 from utils import *
+from openVPN import *
 
 # Thay đổi môi trường sang tiếng Việt
 sys.stdout.reconfigure(encoding="utf-8")
@@ -61,7 +62,7 @@ XPATHS_OUTLOOK = {
 XPATHS_ZALO = {
     "search_box": '//*[@id="contact-search-input"]',
     "message_box": '//*[@id="input_line_0"]',
-    "send_button": '//*[@id="chat-input-container-id"]/div[2]/div[2]/div[2]',
+    "send_button": '//*[@id="chat-input-container-id"]/div[2]/div[2]/div[2]', 
     "img_attached_button": '//*[@id="chat-box-bar-id"]/div[1]/ul/li[2]/div/i',
     "file_attached_button": '//*[@id="chat-box-bar-id"]/div[1]/ul/li[3]/div',
     "group_title": '//*[@id="header"]/div[1]/div[2]/div[1]',
@@ -80,6 +81,11 @@ XPATHS_GNOC = {
     "trangThai_lua_chon": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[2]/div/div[1]/div[2]/div/div[5]/div/div[1]/div/div[1]/div[1]',
     "trangThai_dong": "/html/body/script[3]",
     "export_button": '//*[@id="idFormSearch"]/div[2]/div/div/div/div[1]/div/div[2]/div/button[4]',
+    "tiepTuc_dang_nhap": '//*[@id="registerform"]/div/div[2]/input',
+    "checkBox_30day": '//*[@id="registerform"]/div/div[1]/label/span',
+    "userName": '//*[@id="username"]',
+    "passWord": '//*[@id="password"]',
+    "dangNhap_button": '//*[@id="submit"]',
 }
 
 
@@ -926,9 +932,14 @@ class ZaloBot(BrowserManager):
 
             message_box.send_keys(message)
             message_box.send_keys(Keys.CONTROL, "v")
-            sleep(2)
-            message_box.send_keys(Keys.ENTER)
+            sleep(4)
+            
+            send_button = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["send_button"]))
+            )
 
+            send_button.click()
+            
             return self.check_last_message_status()
 
         except Exception as e:
@@ -1135,7 +1146,7 @@ class OutLookBot(BrowserManager):
 
 
 class GnocBot(BrowserManager):
-    def access(self):
+    def access(self, userName_gnoc, pwd_gnoc, otp_key):
         self.open_url(GNOC_URL)
         try:
             WebDriverWait(self.driver, 20).until(
@@ -1150,32 +1161,93 @@ class GnocBot(BrowserManager):
             return True
 
         except Exception as e:
-            print(f"Chưa đăng nhập Gnoc")
+            print(f"Chưa đăng nhập Gnoc, tiến hành đăng nhập!!!")
 
-            if not Click_byImage("user_gnoc"):
+            if not self.wait_and_send_keys("username", userName_gnoc):
                 return False
 
-            pyautogui.typewrite("Tuantv53")
-
-            if not Click_byImage("pwd_gnoc"):
+            if not self.wait_and_send_keys("password", pwd_gnoc):
                 return False
-
-            pyautogui.typewrite("Pvhkt@2025")
 
             if not Click_byImage("Dang_nhap_gnoc"):
                 return False
 
-            print("Đăng nhập gnoc thành công!!!")
+            if find_Element_byImage("otp_pass"):
+                print("nhập mã OTP")
+                totp = pyotp.TOTP(otp_key).now()
+                pyautogui.typewrite(totp)
+                keyboard = Controller()
+                keyboard.press(Key.enter)  # Press Enter
+                keyboard.release(Key.enter)
+
+            sleep(2)
+            if find_Element_byImage("tiep_tuc_dang_nhap"):
+                if not Click_byImage("tiep_tuc_dang_nhap"):
+                    print("Thất bại khi cố bấm nút Tiếp tục")
+                    return False
+
+            try:
+                WebDriverWait(self.driver, 200).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            XPATHS_GNOC["QuanLyCongViec"],
+                        )
+                    )
+                )
+                print("Đăng nhập GNOC thành công!!!")
+                return True
+
+            except Exception as e:
+                print(f"Lỗi khi cố đăng nhập GNOC: {e}")
+                return False
+
+    def wait_and_send_keys(self, element_id, text, timeout=10):
+        try:
+            field = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((By.ID, element_id))
+            )
+            field.send_keys(text)
             return True
+
+        except Exception as e:
+            print(f"Lỗi: Không tìm thấy phần tử {element_id}: {e}")
+            return False
+
+    def click_on(self, name_ele, sleep_time=2):
+        try:
+            element = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        XPATHS_GNOC[f"{name_ele}"],
+                    )
+                )
+            )
+            element.click()
+            sleep(sleep_time)
+            return True
+
+        except Exception as e:
+            print(f"lỗi khi cố click on {name_ele}: {e}")
+            return False
 
     def get_WoDong(self):
         try:
+            time_out = 100
+            time_wait = 100
+            wait = WebDriverWait(self.driver, time_wait)
+            wait.until(
+                EC.invisibility_of_element_located(
+                    (By.XPATH, '//div[contains(text(), "Đang tải")]')
+                )
+            )
+            sleep(2)
+
             if not Click_byImage("quanLyCongViec"):
                 print("Lỗi không chọn được QLCV")
                 return False
-
-            time_out = 100
-            time_wait = 100
+            
             wait = WebDriverWait(self.driver, time_wait)
             wait.until(
                 EC.invisibility_of_element_located(
@@ -1248,15 +1320,40 @@ class GnocBot(BrowserManager):
 
                     if Export_thanhCong_img:
                         if not Click_byImage("Keep"):
-                            sleep(30)
                             return False
-
-                        return True
-
+                        else:
+                            break
+                        
                 except pyautogui.ImageNotFoundException:
                     pass  # Nếu không tìm thấy, tiếp tục lặp
 
-                time.sleep(1)  # Nghỉ 1 giây trước khi thử lại
+                sleep(1)  # Nghỉ 1 giây trước khi thử lại
+
+            while time.time() - start_time < 200:  # Lặp trong 200 giây
+                try:
+                    dowload_comlate_img = str(IMAGE_PATH / "wo_dong_excel_done.png")
+                    dowload_comlate = pyautogui.locateOnScreen(
+                        dowload_comlate_img, confidence=0.8
+                    )
+                    
+                    if dowload_comlate:
+                        return True
+                    
+                except pyautogui.ImageNotFoundException:
+                    pass  # Nếu không tìm thấy, tiếp tục lặp
+                
+                try:
+                    keep_img = str(IMAGE_PATH / "keep.png")
+                    keep_button = pyautogui.locateOnScreen(
+                        keep_img, confidence=0.8
+                    )
+                    if keep_button: 
+                        Click_byImage("Keep")
+                        
+                except pyautogui.ImageNotFoundException:
+                    pass  # Nếu không tìm thấy, tiếp tục lặp
+
+                sleep(5)
 
             print("❌ Hết thời gian chờ!")  # Debug khi timeout
             return False  # Hết thời gian mà vẫn chưa tìm thấy ảnh

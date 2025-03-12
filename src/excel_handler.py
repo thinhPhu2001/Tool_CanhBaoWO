@@ -45,7 +45,7 @@ class ExcelManager:  # win32
             print(f"File Excel '{self.file_path}' đã được mở trước đó.")
             return True
 
-        print("Đang mở file Excel...")
+        print("\nĐang mở file Excel...")
         try:
             self.excel = win32.Dispatch("Excel.Application")
             self.workbook = self.excel.Workbooks.Open(self.file_path)
@@ -121,7 +121,7 @@ class ExcelManager:  # win32
             try:
                 self.excel.DisplayAlerts = False  # tắt thông báo excel
                 self.excel.Application.Quit()  # Thoát ứng dụng Excel
-                print("Excel Application đã được thoát.")
+                print("Excel Application đã được thoát.\n")
             except Exception as e:
                 print(f"Lỗi khi thoát Excel: {e}")
             finally:
@@ -267,9 +267,9 @@ class ExcelManager:  # win32
         x.start()
 
         try:
-            print(f"Chạy macro {macro_name}")
+            print(f"    Chạy macro {macro_name}")
             self.excel.Application.Run(macro_name)
-            print(f"Macro '{macro_name}' đã được chạy thành công!")
+            print(f"    Macro '{macro_name}' đã được chạy thành công!")
             stop_thread.set()
             x.join()
             return True

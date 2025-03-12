@@ -18,7 +18,7 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")
 
 time_shift = {
-    "First": {"start": "06:20"},
+    "First": {"start": "06:25"},
     "Second": {"start": "08:30"},
     "Third": {"start": "10:30"},
     "Fourth": {"start": "12:10"},

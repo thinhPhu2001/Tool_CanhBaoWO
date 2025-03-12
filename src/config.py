@@ -62,6 +62,9 @@ config = {
     "cdbr:": None,
     "server:": None,
     "GGSheet ID:": None,
+    "user_name Gnoc:": None,
+    "password Gnoc:": None,
+    "otp gnoc:": None,
 }
 
 with open(OPEN_VPN_CONFIG_PATH, "r") as file:
@@ -81,3 +84,6 @@ CHROME_PROFILE_DI_DONG_PATH = config["didong:"]
 CHROME_PROFILE_CDBR_PATH = config["cdbr:"]
 DB_SERVER = config["server:"]
 GG_SHEET_ID = config["GGSheet ID:"]
+USERNAME_GNOC = config["user_name Gnoc:"]
+PASSWORD_GNOC = config["password Gnoc:"]
+OTP_GNOC = config["otp gnoc:"]

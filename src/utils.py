@@ -170,3 +170,14 @@ def Click_byImage(img_name):
         return True
     except pyautogui.ImageNotFoundException:
         return False
+    
+def find_Element_byImage(img_name):
+    try:
+        img_path = str(IMAGE_PATH / f"{img_name}.png")
+        element = pyautogui.locateOnScreen(img_path, confidence=0.8)
+
+        if not element:
+            return False
+        return True
+    except pyautogui.ImageNotFoundException:
+        return False

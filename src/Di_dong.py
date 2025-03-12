@@ -6,11 +6,10 @@ from excel_handler import *
 from browser import *
 from GG_Sheet import *
 
-import shutil
 from sqlalchemy import text
 from pynput.keyboard import Controller, Key
-import schedule
 import sys
+from tqdm import tqdm
 
 # thay đôi môi trường tiếng Việt
 sys.stdout.reconfigure(encoding="utf-8")
@@ -138,7 +137,7 @@ def get_WO_dong():
                 browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
 
             gnoc.driver = browser.driver
-            if not gnoc.access():
+            if not gnoc.access(USERNAME_GNOC, PASSWORD_GNOC, OTP_GNOC):
                 return False
 
             sleep(5)
@@ -170,24 +169,33 @@ def get_WO_dong():
 def push_data_GGsheet():
     try:
         data_diDong_chatBot.open_file()
+        data_diDong_chatBot.run_macro("thinh.RefreshData")
 
-        if not data_diDong_chatBot.run_macro("Module9.DanDuLieu"):
+        step_time = 60
+
+        for _ in tqdm(range(step_time), desc="Đang chờ", unit="s"):
+            sleep(1)
+
+        print("Hoàn thành refesh data BKK/VTTB!!!!")
+
+        if not data_diDong_chatBot.run_macro("thinh.DanDuLieu"):
             return False
 
-        if not data_diDong_chatBot.run_macro("Module9.DanDuLieu2"):
+        if not data_diDong_chatBot.run_macro("thinh.DanDuLieu2"):
             return False
 
         print("chuyển dữ liệu thành công")
 
         # Danh sách macro cần chạy theo thứ tự
         macros = [
-            ("Module9.RUN_MapTheoTram()", "Chạy số liệu cho MAP TRẠM"),
-            ("Module9.RUN_MapMucNhanVien()", "Chạy số liệu cho NHÂN VIÊN"),
+            ("thinh.RUN_WoList", "Chạy công thức cho wolist"),
+            ("thinh.XoaWoBKK", "Xoas Wo BKK/VTTB"),
         ]
 
         for macro, description in macros:
             for attempt in range(3):
                 if data_diDong_chatBot.run_macro(macro):
+                    sleep(5)
                     break
                 print(
                     f"DATA chat bot: chạy lệnh {description} thất bại, thử lần {attempt + 1}"
@@ -199,21 +207,13 @@ def push_data_GGsheet():
                 return False
 
         print("DATA chat bot: Đã xử lý VBA thành công!")
-
+        data_diDong_chatBot.save_file()
         # đẩy dữ liệu TRẠM lên GG SHEET
         excel_to_ggSheet(
             sheet_id=GG_SHEET_ID,
-            new_worksheet_name="tram",
+            new_worksheet_name="Wolist",
             excel_path=DATA_DIDONG_ChatBot_PATH,
-            sheet_name_excel="MAP THEO TRAM",
-        )
-
-        # đẩy dữ liệu NHÂN VIÊN lên GG SHEET
-        excel_to_ggSheet(
-            sheet_id=GG_SHEET_ID,
-            new_worksheet_name="FT",
-            excel_path=DATA_DIDONG_ChatBot_PATH,
-            sheet_name_excel="MAP Muc Nhan Vien",
+            sheet_name_excel="WoList",
         )
 
         return True
@@ -226,6 +226,7 @@ def push_data_GGsheet():
         data_diDong_chatBot.save_file()
         data_diDong_chatBot.close_all_file()
 
+        
 
 def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
     """
@@ -233,6 +234,14 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
     """
     try:
         excel_tool_manager.open_file()
+        excel_tool_manager.run_macro("Module3.RefreshData")
+        
+        step_time = 60
+
+        for _ in tqdm(range(step_time), desc="Đang chờ", unit="s"):
+            sleep(1)
+
+        print("Hoàn thành refesh data BKK/VTTB!!!!")
 
         if not excel_tool_manager.run_macro("Module2.DanDuLieu"):
             return False
@@ -241,10 +250,12 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
 
         # Danh sách macro cần chạy theo thứ tự
         macros = [
+            ("Module3.RUN_WoList", "chay cong thuc cho Wolist"),
+            ("Module3.XoaWoBKK", "Xoa di wo BKK/VTTB"),
             ("Module1.PasteFormulasAndValuesTTH_DOC", "lọc TTH_DOC"),
-            ("Module4.PasteFormulasAndValuesSimple_NhanVien", "lọc MapMucNhanVien"),
-            ("Module2.pic_cum_huyen_loop", "xuất hình cụm huyện"),
             ("Module2.pic_TTH_doc", "xuất hình pic_TTH_doc"),
+            ("Module3.run_MapMucNhanVien", "lọc MapMucNhanVien"),
+            ("Module3.picMapMucNhanVienMobileAll", "xuất hình cụm huyện"),
         ]
 
         for macro, description in macros:
@@ -506,6 +517,7 @@ def send_message_user_with_TAG_zalo():
                 EC.element_to_be_clickable((By.XPATH, XPATHS_ZALO["send_button"]))
             )
             send_button.click()
+
             print(f"Tin nhắn gửi đến {cum_doi} thành công!!!")
             success_list.append(str(cum_doi))
             sleep(5)
@@ -593,32 +605,32 @@ def auto_process_diDong():
         # lấy dữ liệu gnoc về xử lý
         getDB_to_excel(DATA_GNOC_RAW_PATH)
 
-        # for tempt in range(3):
-        #     if get_WO_dong():
-        #         print("Lấy dữ liệu WO dong thành công!")
+        for tempt in range(3):
+            if get_WO_dong():
+                print("Lấy dữ liệu WO dong thành công!")
 
-        #         # Thử đẩy dữ liệu lên Google Sheet
-        #         for attempt in range(3):
-        #             if push_data_GGsheet():
-        #                 print("Dữ liệu đã được gửi lên Google Sheet thành công!")
-        #                 break  # Nếu thành công, thoát vòng lặp nội
-        #             print(
-        #                 f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}"
-        #             )
-        #         else:
-        #             print(
-        #                 "\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, không gửi dữ liệu lên GGsheet được\n"
-        #             )
+                # Thử đẩy dữ liệu lên Google Sheet
+                for attempt in range(3):
+                    if push_data_GGsheet():
+                        print("Dữ liệu đã được gửi lên Google Sheet thành công!")
+                        break  # Nếu thành công, thoát vòng lặp nội
+                    print(
+                        f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}"
+                    )
+                else:
+                    print(
+                        "\nChat bot: Xử lý dữ liệu Excel thất bại sau 3 lần thử, không gửi dữ liệu lên GGsheet được\n"
+                    )
 
-        #         break  # Nếu lấy dữ liệu thành công, không chạy lại nữa
+                break  # Nếu lấy dữ liệu thành công, không chạy lại nữa
 
-        #     print(f"Lấy dữ liệu WO dong thất bại, thử lần {tempt + 1}")
-        # else:
-        #     print("\nLấy dữ liệu WO dong thất bại sau 3 lần thử\n")
+            print(f"Lấy dữ liệu WO dong thất bại, thử lần {tempt + 1}")
+        else:
+            print("\nLấy dữ liệu WO dong thất bại sau 3 lần thử\n")
 
-        if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
-            print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
-            return
+        # if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
+        #     print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
+        #     return
 
         # xử lý excel
         for attempt in range(3):
@@ -630,15 +642,15 @@ def auto_process_diDong():
             print("DI động: Xử lý dữ liệu Excel thất bại sau 3 lần thử")
             return
 
-        #gửi tin nhắn
-        if SENDBY.upper() == "WHATSAPP":
-            process_whatsapp_notifications()
+        # #gửi tin nhắn
+        # if SENDBY.upper() == "WHATSAPP":
+        #     process_whatsapp_notifications()
 
-        elif SENDBY.upper() == "ZALO":
-            process_zalo_notifications()
+        # elif SENDBY.upper() == "ZALO":
+        #     process_zalo_notifications()
 
-        if browser.is_browser_open():
-            browser.close()
+        # if browser.is_browser_open():
+        #     browser.close()
 
     except Exception as e:
         print(e)
