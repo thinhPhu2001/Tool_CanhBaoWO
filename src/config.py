@@ -9,6 +9,7 @@ import sys
 # thay đôi môi trường tiếng Việt
 sys.stdout.reconfigure(encoding="utf-8")
 
+FIREFOX_PROFILE_PATH = r"C:\Users\Admin\AppData\Local\Mozilla\Firefox\Profiles\9f86nawg.default"
 # Đường dẫn URL
 WHATSAPP_URL = "https://web.whatsapp.com/"
 ZALO_URL = "https://id.zalo.me/account?continue=https%3A%2F%2Fchat.zalo.me%2F"
@@ -65,6 +66,12 @@ config = {
     "user_name Gnoc:": None,
     "password Gnoc:": None,
     "otp gnoc:": None,
+    "fire fox:": None,
+    "link bccs:": None, 
+    "link qlctkt:": None,
+    "link kho:": None, 
+    "user_name CDBR:": None,
+    "password CDBR:": None,
 }
 
 with open(OPEN_VPN_CONFIG_PATH, "r") as file:
@@ -87,3 +94,9 @@ GG_SHEET_ID = config["GGSheet ID:"]
 USERNAME_GNOC = config["user_name Gnoc:"]
 PASSWORD_GNOC = config["password Gnoc:"]
 OTP_GNOC = config["otp gnoc:"]
+FIREFOX_PROFILE_PATH = config["fire fox:"]
+LINK_BCCS = config["link bccs:"]
+LINK_QLCTKT = config["link qlctkt:"]
+LINK_KHO = config["link kho:"]
+USERNAME_CDBR = config["user_name CDBR:"]
+PASSWORD_CDBR = config["password CDBR:"]

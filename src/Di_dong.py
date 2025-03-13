@@ -178,13 +178,17 @@ def push_data_GGsheet():
 
         print("Hoàn thành refesh data BKK/VTTB!!!!")
 
-        if not data_diDong_chatBot.run_macro("thinh.DanDuLieu"):
-            return False
+        macros = ["thinh.DanDuLieu", "thinh.DanDuLieu2"]
 
-        if not data_diDong_chatBot.run_macro("thinh.DanDuLieu2"):
-            return False
+        for macro in macros:
+            for attempt in range(3):
+                if data_diDong_chatBot.run_macro(macro):
+                    break
+                sleep(5)
+            else:
+                return False  # Nếu cả 3 lần đều thất bại, thoát ngay
 
-        print("chuyển dữ liệu thành công")
+        print("Chuyển dữ liệu thành công")
 
         # Danh sách macro cần chạy theo thứ tự
         macros = [
@@ -207,14 +211,6 @@ def push_data_GGsheet():
                 return False
 
         print("DATA chat bot: Đã xử lý VBA thành công!")
-        data_diDong_chatBot.save_file()
-        # đẩy dữ liệu TRẠM lên GG SHEET
-        excel_to_ggSheet(
-            sheet_id=GG_SHEET_ID,
-            new_worksheet_name="Wolist",
-            excel_path=DATA_DIDONG_ChatBot_PATH,
-            sheet_name_excel="WoList",
-        )
 
         return True
 
@@ -223,7 +219,8 @@ def push_data_GGsheet():
         return False
 
     finally:
-        data_diDong_chatBot.save_file()
+        while data_diDong_chatBot.excel.Application.Ready == False:
+            sleep(1)  # Chờ cho đến khi Excel sẵn sàng
         data_diDong_chatBot.close_all_file()
 
         
@@ -243,7 +240,11 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
 
         print("Hoàn thành refesh data BKK/VTTB!!!!")
 
-        if not excel_tool_manager.run_macro("Module2.DanDuLieu"):
+        for attempt in range(3):
+            if excel_tool_manager.run_macro("Module2.DanDuLieu"):
+                break
+            sleep(5)
+        else: 
             return False
 
         print("chuyển dữ liệu thành công")
@@ -260,11 +261,19 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
 
         for macro, description in macros:
             for attempt in range(3):
+                timeout = 30
+                while timeout > 0 and not excel_tool_manager.excel.Application.Ready:
+                    sleep(1)
+                    timeout -= 1
+
                 if excel_tool_manager.run_macro(macro):
                     break
+
                 print(
                     f"Di động: chạy lệnh {description} thất bại, thử lần {attempt + 1}"
                 )
+                sleep(10)
+                
             else:
                 print(f"Di động: Xử lý VBA '{description}' thất bại sau 3 lần thử")
                 return False
@@ -277,8 +286,16 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
         return False
 
     finally:
-        excel_tool_manager.save_file()
+        # while excel_tool_manager.excel.Application.Ready == False:
+        #     sleep(1)  # Chờ cho đến khi Excel sẵn sàng
+
+        # excel_tool_manager.save_file()
+
+        while excel_tool_manager.excel.Application.Ready == False:
+            sleep(1)  # Chờ cho đến khi Excel sẵn sàng
+        
         excel_tool_manager.close_all_file()
+        
 
 
 # gửi thông báo cho cụm tỉnh (whatsApp)
@@ -427,6 +444,13 @@ def send_message_cnct_zalo():
     try:
         # gửi tên nhóm theo cột cụm đội
         df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
+        df2 = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
+    
+        manager = df2[df2["Chức vụ"] == "GDH"]
+
+        groups = manager.query("ZALO != 0")["ZALO"].dropna().astype(str).tolist()
+        # groups = manager.loc[(manager["ZALO"].notna()) & (manager["ZALO"] != 0), "ZALO"].astype(str).tolist()
+
         for index, row in df.iloc[:1].iterrows():
             group_name = str(row["Tỉnh"]).strip() if not pd.isna(row["Tỉnh"]) else None
             link = (
@@ -441,7 +465,7 @@ def send_message_cnct_zalo():
 
             zalo.find_group_name(link)
 
-            status_message = zalo.send_attached_img_message(message, img_path, "all")
+            status_message = zalo.send_attached_img_message(message, img_path, groups)
 
             if status_message == "sent":
                 return "sent"
@@ -465,9 +489,11 @@ def send_message_user_with_TAG_zalo():
     zalo.driver = browser.driver
 
     success_list = []
-
+    
     # gửi tên nhóm theo cột cụm đội
     df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
+    df2 = pd.read_excel(DATA_TOOL_MANAGEMENT_PATH, sheet_name="Key", header=0)
+
     for index, row in df.iloc[1:].iterrows():
         link = (
             str(row["Link group"]).strip() if not pd.isna(row["Link group"]) else None
@@ -479,6 +505,10 @@ def send_message_user_with_TAG_zalo():
         message = str(row["Message"])
         img_name = row["img"]
         img_path = USER_IMG_PATH / f"{img_name}.jpg"
+        
+        ma_nhom = row["Mã nhóm"]
+        list_ft = df2[df2["Cụm đội"] == ma_nhom]
+        lists = list_ft.query("ZALO != 0")["ZALO"].dropna().astype(str).tolist()
 
         try:
             # Kiểm tra xem hình ảnh có tồn tại không
@@ -502,15 +532,36 @@ def send_message_user_with_TAG_zalo():
             message_box.send_keys(
                 Keys.CONTROL, "a", Keys.BACKSPACE
             )  # xóa nội dung cũ nếu có
-            message_box.send_keys(message)
 
-            # tag ALL
-            message_box.send_keys(" @")
-            message_box.send_keys("all")
-            sleep(1)
-            message_box.send_keys(Keys.ARROW_DOWN)
-            message_box.send_keys(Keys.ENTER)
-            sleep(3)
+            message_box.send_keys(message)
+            
+            if lists is not None:
+                if not isinstance(lists, list):
+                    lists = [lists]
+
+                for ft_name in lists: 
+                    try: 
+                        message_box = zalo.find_message_box()
+                        message_box.send_keys(" @")
+                        message_box.send_keys(ft_name)
+                        sleep(2)
+
+                        try:
+                            suggestion = WebDriverWait(zalo.driver, 5).until(
+                                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["suggestion_box"]))
+                            )
+                            # message_box.send_keys(Keys.ARROW_DOWN)
+                            message_box.send_keys(Keys.TAB)
+                            message_box.send_keys(Keys.SPACE)
+                            sleep(2)
+
+                        except:
+                            # print(f"⚠️ Không tìm thấy gợi ý cho {tag_name}, có thể không tag được.")
+                            continue
+                        
+                    except StaleElementReferenceException:
+                        # print(f"    ⚠️ Phần tử message_box bị mất, tìm lại...")
+                        continue 
 
             # Nhấn nút gửi tin nhắn
             send_button = WebDriverWait(zalo.driver, 10).until(
@@ -518,7 +569,7 @@ def send_message_user_with_TAG_zalo():
             )
             send_button.click()
 
-            print(f"Tin nhắn gửi đến {cum_doi} thành công!!!")
+            print(f"\nTin nhắn gửi đến {cum_doi} thành công!!!")
             success_list.append(str(cum_doi))
             sleep(5)
 
@@ -612,8 +663,15 @@ def auto_process_diDong():
                 # Thử đẩy dữ liệu lên Google Sheet
                 for attempt in range(3):
                     if push_data_GGsheet():
-                        print("Dữ liệu đã được gửi lên Google Sheet thành công!")
-                        break  # Nếu thành công, thoát vòng lặp nội
+                        # đẩy dữ liệu TRẠM lên GG SHEET
+                        if excel_to_ggSheet(
+                            sheet_id=GG_SHEET_ID,
+                            new_worksheet_name="Wolist",
+                            excel_path=DATA_DIDONG_ChatBot_PATH,
+                            sheet_name_excel="WoList",
+                        ):
+                            print("Dữ liệu đã được gửi lên Google Sheet thành công!")
+                            break  # Nếu thành công, thoát vòng lặp nội
                     print(
                         f"Chat bot: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}"
                     )
@@ -628,9 +686,9 @@ def auto_process_diDong():
         else:
             print("\nLấy dữ liệu WO dong thất bại sau 3 lần thử\n")
 
-        # if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
-        #     print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
-        #     return
+        if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
+            print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
+            return
 
         # xử lý excel
         for attempt in range(3):
@@ -642,15 +700,15 @@ def auto_process_diDong():
             print("DI động: Xử lý dữ liệu Excel thất bại sau 3 lần thử")
             return
 
-        # #gửi tin nhắn
-        # if SENDBY.upper() == "WHATSAPP":
-        #     process_whatsapp_notifications()
+        #gửi tin nhắn
+        if SENDBY.upper() == "WHATSAPP":
+            process_whatsapp_notifications()
 
-        # elif SENDBY.upper() == "ZALO":
-        #     process_zalo_notifications()
+        elif SENDBY.upper() == "ZALO":
+            process_zalo_notifications()
 
-        # if browser.is_browser_open():
-        #     browser.close()
+        if browser.is_browser_open():
+            browser.close()
 
     except Exception as e:
         print(e)

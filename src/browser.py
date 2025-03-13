@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 import time
 from datetime import datetime, timedelta
+from selenium.common.exceptions import StaleElementReferenceException
 
 
 from config import *
@@ -71,6 +72,7 @@ XPATHS_ZALO = {
     "STR_RECEIVED": '[data-translate-inner="STR_RECEIVED"]',
     "STR_SENDING": 'data-translate-inner="STR_SENDING"',
     "Clock_24": 'class="fa fa-Clock_24_Line"',
+    "suggestion_box": '/html/body/div[2]',
 }
 
 XPATHS_GNOC = {
@@ -88,7 +90,12 @@ XPATHS_GNOC = {
     "dangNhap_button": '//*[@id="submit"]',
 }
 
-
+#Fire fox 
+XPATHS_LINK_KHO = {
+    "userName" : '//*[@id="username"]',
+    "passWord": '//*[@id="password"]',
+    "login_button": '/html/body/div[2]/form/div[1]/div[5]/input[3]'
+}
 class BrowserManager:
     def __init__(self):
         self.driver = None
@@ -788,7 +795,12 @@ class ZaloBot(BrowserManager):
         except Exception as e:
             print(e)
 
-    def send_attached_img_message(self, message, file_path, tag_name=None):
+    def find_message_box(self):
+        return WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["message_box"]))
+            )
+    
+    def send_attached_img_message(self, message, file_path, tag_names=None):
         """
         gửi tin nhắn + gửi hình
         Args:
@@ -803,23 +815,39 @@ class ZaloBot(BrowserManager):
             copy_image_to_clipboard(file_path)
 
             # Tìm ô message_box trong Zalo
-            message_box = WebDriverWait(self.driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["message_box"]))
-            )
+            message_box = self.find_message_box()
             message_box.click()
             message_box.send_keys(Keys.CONTROL, "a", Keys.BACKSPACE)
             message_box.send_keys(Keys.CONTROL, "v")  # dán hình vào ô tin nhắn
             sleep(2)
 
-            if tag_name:
-                # ghi tin nhắn + tag all
+            if tag_names is not None:
+                if not isinstance(tag_names, list):
+                    tag_names = [tag_names] 
                 message_box.send_keys(message)
-                message_box.send_keys(" @")
-                message_box.send_keys(tag_name)
-                sleep(2)
-                message_box.send_keys(Keys.ARROW_DOWN)
-                message_box.send_keys(Keys.ENTER)
-                sleep(2)
+
+                for tag_name in tag_names:
+                    try:
+                        message_box = self.find_message_box()
+                        message_box.send_keys(" @")
+                        message_box.send_keys(tag_name)
+                        sleep(2)
+                        try: 
+                            suggestion = WebDriverWait(self.driver, 5).until(
+                                EC.presence_of_element_located((By.XPATH, XPATHS_ZALO["suggestion_box"]))
+                            )
+                            # message_box.send_keys(Keys.ARROW_DOWN)
+                            message_box.send_keys(Keys.TAB)
+                            message_box.send_keys(Keys.SPACE)
+                            sleep(2)
+                        except:
+                            # print(f"⚠️ Không tìm thấy gợi ý cho {tag_name}, có thể không tag được.")
+                            continue
+                        
+                    except StaleElementReferenceException:
+                        # print(f"    ⚠️ Phần tử message_box bị mất, tìm lại...")
+                        continue 
+                    
             else:
                 message_box.send_keys(message)
 
@@ -1360,4 +1388,54 @@ class GnocBot(BrowserManager):
 
         except Exception as e:
             print(f"Lỗi khi lấy dữ liệu gnoc web: {e}")
+            return False
+
+class FireFoxManager:
+    def __init__(self):
+        self.driver = None
+
+    def start_browser(self, profile_path):
+        firefox_option = webdriver.FirefoxOptions()
+        firefox_option.profile = profile_path  # Chỉ định profile của Firefox
+
+        self.driver = webdriver.Firefox(options=firefox_option)
+        self.driver.maximize_window()
+        print("Mở trình duyệt thành công")
+
+    def open_url(self, url):
+        self.driver.get(url)
+
+    def close(self):
+        self.driver.quit()
+        self.driver = None
+        print("Đóng trình duyệt fire fox")
+        sleep(5)
+
+class KHO(FireFoxManager):
+
+    def access(self, userName, password):
+        self.open_url(LINK_KHO)
+
+        try:
+            #Đăng nhập 
+            if not self.wait_and_send_keys("username", userName):
+                return False
+
+            if not self.wait_and_send_keys("password", password):
+                return False
+            
+            return True
+        except:
+            print(f"Lỗi khi đăng nhập: {e}")
+            return False
+        
+    def wait_and_send_keys(self, element_id, text, timeout=10):
+        try:
+            field = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((By.ID, element_id))
+            )
+            field.send_keys(text)
+            return True
+        except Exception as e:
+            print(f"Lỗi: Không tìm thấy phần tử {element_id}: {e}")
             return False

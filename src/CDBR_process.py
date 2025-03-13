@@ -23,6 +23,7 @@ whatsapp = WhatsAppBot()
 outlook = OutLookBot()
 zalo = ZaloBot()
 
+bot = FireFoxManager()
 
 # lấy dữ liệu DB lưu xuống excel
 def getDB_to_excel_CDBR():
@@ -50,7 +51,33 @@ def getDB_to_excel_CDBR():
         # Đảm bảo tắt OpenVPN dù xảy ra lỗi hay không
         off_openvpn()
 
+def get_WO_dong_CDBR(): 
+    """
+    Lấy dữ liệu đóng cho CDBR
+    """
+    max_retries = 3
+    retries = 0
+    while retries < max_retries:      
+        try:
+            if not on_openvpn():
+                raise ConnectionError
 
+            bot.start_browser(FIREFOX_PROFILE_PATH)
+            bot.open_url(LINK_KHO)
+            return True
+        
+        except ConnectionError as ce:
+            print(f"Lỗi kết nối: {ce}")
+
+        except Exception as e:
+            print(f"Lỗi lấy dữ liệu đóng: {e}")
+            return False
+        
+        finally:
+            bot.close()
+            # Đảm bảo tắt VPN
+            off_openvpn()
+    
 # Xử lý dữ liệu excel (Run macro)
 def excel_process_CDBR():
     """
