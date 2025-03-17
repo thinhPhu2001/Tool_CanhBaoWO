@@ -62,8 +62,8 @@ def get_WO_dong_CDBR():
             if not on_openvpn():
                 raise ConnectionError
 
-            bot.start_browser(FIREFOX_PROFILE_PATH)
-            bot.open_url(LINK_KHO)
+            
+
             return True
         
         except ConnectionError as ce:
@@ -71,13 +71,20 @@ def get_WO_dong_CDBR():
 
         except Exception as e:
             print(f"Lỗi lấy dữ liệu đóng: {e}")
-            return False
         
         finally:
+            sleep(10)
             bot.close()
-            # Đảm bảo tắt VPN
-            off_openvpn()
-    
+            off_openvpn() # Đảm bảo tắt VPN
+
+        # Tăng số lần thử và thời gian chờ
+        retries += 1
+        print(f"Thử lại lần thứ {retries} sau 5 giây...")
+        sleep(5)
+
+    print("không thành công sau nhiều lần thử!!!")
+    return False
+
 # Xử lý dữ liệu excel (Run macro)
 def excel_process_CDBR():
     """
@@ -318,7 +325,7 @@ def auto_process_CDBR():
                 while excel.Workbooks.Count > 0:
                     wb = excel.Workbooks(1)  # Get the first workbook
                     wb.Close(SaveChanges=False)  # Close it without saving
-
+                    
                 excel.Quit()  # Ensure Excel itself is closed
                 print("All Excel instances closed successfully.")
 

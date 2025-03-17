@@ -46,34 +46,30 @@ def auto_combines():
 if __name__ == "__main__":
 
     # Lên lịch chạy
-    # schedule.every().day.at(time_shift["First"]["start"]).do(auto_process_CDBR) #6:30
-    # schedule.every().day.at(time_shift["Second"]["start"]).do(auto_combines) #8:30
-    # schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR) #10:30
-    # schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines) #12:10
-    # schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR) #14:20
-    # schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_process_CDBR) #16:20
-    # schedule.every().day.at(time_shift["Seventh"]["start"]).do(auto_process_CDBR) #19:20
+    schedule.every().day.at(time_shift["First"]["start"]).do(auto_combines) #6:30
+    schedule.every().day.at(time_shift["Second"]["start"]).do(auto_process_CDBR) #8:30
+    schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR) #10:30
+    schedule.every().day.at(time_shift["Fourth"]["start"]).do(auto_combines) #12:10
+    schedule.every().day.at(time_shift["Fifth"]["start"]).do(auto_process_CDBR) #14:20
+    schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_combines) #16:20
+    schedule.every().day.at(time_shift["Seventh"]["start"]).do(auto_process_CDBR) #19:20
 
-    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    # while True:
-    #     schedule.run_pending()
-    #     sleep(3)
+    print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
+    while True:
+        schedule.run_pending()
+        sleep(3)
     
-    # browser.start_browser(CHROME_PROFILE_DI_DONG_PATH)
-    # gnoc.driver = browser.driver
-    # sleep(1000)
 
-    # auto_process_CDBR()
-    # auto_process_diDong()
 
+    # process_WoDong()
     # on_openvpn()
-    # bot.start_browser(FIREFOX_PROFILE_PATH)
-    # bot.open_url(LINK_KHO)
-    # sleep(10000)
+    # get_Wo_Inventory()
 
-    # get_WO_dong_CDBR()
+    # excel_to_ggSheet(
+    #     sheet_id=GG_SHEET_ID,
+    #     new_worksheet_name="Wolist",
+    #     excel_path=DATA_DIDONG_ChatBot_PATH,
+    #     sheet_name_excel="WoList",
+    # )
 
 
-
-
-    

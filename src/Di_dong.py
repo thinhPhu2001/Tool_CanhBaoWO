@@ -138,7 +138,7 @@ def get_WO_dong():
 
             gnoc.driver = browser.driver
             if not gnoc.access(USERNAME_GNOC, PASSWORD_GNOC, OTP_GNOC):
-                return False
+                raise ValueError("Đăng nhập GNOC thất bại, thử lại ...")
 
             sleep(5)
 
@@ -148,15 +148,16 @@ def get_WO_dong():
         except ConnectionError as ce:
             print(f"Lỗi kết nối: {ce}")
 
+        except ValueError as ve: 
+            print(f"lỗi đăng nhập GNOC: {ve}")
+            
         except Exception as e:
             print(f"lỗi khi lấy dữ liệu Wo đóng {e}")
-            return False
 
         finally:
             sleep(10)
             browser.close()
-            # Đảm bảo tắt VPN
-            off_openvpn()
+            off_openvpn() # Đảm bảo tắt VPN
 
         # Tăng số lần thử và thời gian chờ
         retries += 1
@@ -164,14 +165,14 @@ def get_WO_dong():
         sleep(5)
 
     print("không thành công sau nhiều lần thử!!!")
-
+    return False
 
 def push_data_GGsheet():
     try:
         data_diDong_chatBot.open_file()
         data_diDong_chatBot.run_macro("thinh.RefreshData")
 
-        step_time = 60
+        step_time = 30
 
         for _ in tqdm(range(step_time), desc="Đang chờ", unit="s"):
             sleep(1)
@@ -233,7 +234,7 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
         excel_tool_manager.open_file()
         excel_tool_manager.run_macro("Module3.RefreshData")
         
-        step_time = 60
+        step_time = 30
 
         for _ in tqdm(range(step_time), desc="Đang chờ", unit="s"):
             sleep(1)

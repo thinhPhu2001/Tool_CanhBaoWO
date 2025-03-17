@@ -1,7 +1,7 @@
 import os
 import sys
 from time import sleep
-
+import psutil
 from bs4 import BeautifulSoup
 from pynput.keyboard import Controller, Key
 import pyperclip
@@ -1425,7 +1425,7 @@ class KHO(FireFoxManager):
                 return False
             
             return True
-        except:
+        except Exception as e:
             print(f"Lỗi khi đăng nhập: {e}")
             return False
         
@@ -1439,3 +1439,280 @@ class KHO(FireFoxManager):
         except Exception as e:
             print(f"Lỗi: Không tìm thấy phần tử {element_id}: {e}")
             return False
+        
+
+def open_sfive():
+    try:
+        # Mở SFive trên Windows
+        subprocess.run(["cmd", "/c", "start sfive"], shell=True)
+        time.sleep(5)  # Chờ SFive khởi động
+
+        # Kiểm tra tiến trình SFive đã chạy chưa
+        sfive_running = False
+        for process in psutil.process_iter(attrs=["name"]):
+            if "sfive" in process.info["name"].lower():
+                sfive_running = True
+                break
+        
+        if not sfive_running:
+            print("Lỗi: SFive không chạy!")
+            return False
+
+        # Tìm cửa sổ SFive và maximize
+        windows = gw.getWindowsWithTitle("SFive")
+        if windows:
+            for window in windows:
+                window.maximize()
+        else:
+            print("Lỗi: Không tìm thấy cửa sổ SFive!")
+            return False
+
+        toolbar_path = str(IMAGE_PATH / "sfive" / "tool_bar.png")
+        sFive_logo = str(IMAGE_PATH / "sfive" / "sFive_logo.png")
+
+        start_time = time.time()
+        max_wait_time = 20
+        
+        while time.time() - start_time < max_wait_time:
+            try: 
+                if find_Element_sFive(toolbar_path):
+                    return True
+                
+                sFive_position = pyautogui.locateOnScreen(sFive_logo, confidence=0.8)
+                if sFive_position: 
+                    pyautogui.click(pyautogui.center(sFive_position))
+                    
+            except pyautogui.ImageNotFoundException:
+                pass
+        
+        print("     Hết thời gian chờ mở sFive!!!")
+        return False
+    
+    except Exception as e:
+        print(f"Lỗi khi mở SFive: {e}")
+        return False
+    
+def Login_bccs(link):
+    webbar_position = [574,49]
+
+    try:
+        print("     Truy cập vào BCCS")
+        pyautogui.click(webbar_position) 
+        sleep(2)
+        pyautogui.typewrite(LINK_KHO)
+        sleep(5)
+        pyautogui.press("enter") 
+
+
+        login_button_path = str(IMAGE_PATH / "sfive" / "login.png")
+        bccs_homepage = str(IMAGE_PATH / "sfive" / "BCCS_homepage.png")
+
+        start_time = time.time()
+        max_wait_time = 100
+        
+        while time.time() - start_time < max_wait_time:
+            try: 
+                sleep(5)
+                login_button = pyautogui.locateOnScreen(login_button_path, confidence=0.8)
+
+                if login_button:
+                    print("     Chưa đăng nhập, tiến hành click nút đăng nhập!!!")
+                    pyautogui.click(pyautogui.center(login_button))
+
+                if find_Element_sFive(bccs_homepage):
+                    print("    Đăng nhập BCCS thành công")
+                    return True
+            
+            except pyautogui.ImageNotFoundException:
+                pass
+
+    except Exception as e:
+        print(f"Lỗi khi lấy dữ liệu Wo dong: {e}")
+        return False
+
+def click_on(img_path):
+    try:
+        element = pyautogui.locateOnScreen(img_path, confidence=0.8)
+
+        if not element:
+            return False
+        
+        pyautogui.click(pyautogui.center(element))
+        sleep(4)
+        return True
+    
+    except pyautogui.ImageNotFoundException:
+        return False
+
+def process_WoDong():
+    max_retries = 3
+    retries = 0
+
+    while retries < max_retries:
+        try:
+            if not on_openvpn():
+                raise ConnectionError
+            
+            sleep(5)
+            if open_sfive():
+                if Login_bccs(LINK_KHO):
+                    if get_Wo_Inventory():
+                        return True
+
+        except ConnectionError as ce:
+            print(f"Lỗi kết nối: {ce}")
+        
+        except Exception as e:
+            print(f"Lỗi không xác định: {e}")
+
+        # finally:
+        #     off_openvpn()
+
+        # Tăng số lần thử và thời gian chờ
+        retries += 1
+        print(f"Thử lại lần thứ {retries} sau 5 giây...")
+        sleep(5)
+
+    print("Không thể hoàn thành tác vụ sau nhiều lần thử.")
+    return False
+
+def delete_All():
+    pyautogui.hotkey("ctrl", "a")
+
+    sleep(0.5)  # Chờ một chút để đảm bảo nội dung đã được chọn
+
+    # Nhấn Delete để xóa nội dung
+    pyautogui.press("delete")
+
+    sleep(0.5)  
+
+def get_Wo_Inventory():
+    try:
+        xuatExcelFile_position1 = [1496, 425]
+        xuatExcelFile_position2 = [1471, 451]
+        donVi = [428, 204]
+        loai_giaoDich = [863, 202]
+
+
+        inventory_path = str(IMAGE_PATH / "sfive" / "inventory.png")
+        baoCaoChiTietTon_path = str(IMAGE_PATH / "sfive" / "baoCaoChiTietTon.png")
+        xuatExcelButton_path = str(IMAGE_PATH / "sfive" / "xuatExcel.png")
+
+        morong_path = str(IMAGE_PATH / "sfive" / "moRong.png")
+        baocao_path = str(IMAGE_PATH / "sfive" / "baoCao.png")
+        QuanLyBaoCaoOffline_path = str(IMAGE_PATH / "sfive" / "QuanLyBaoCaoOffline.png")
+        timkiem_path = str(IMAGE_PATH / "sfive" / "timKiem.png")
+        savebutton_path= str(IMAGE_PATH / "sfive" / "save.png")
+
+        if not click_on(inventory_path):
+            return False 
+        
+        if not click_on(baoCaoChiTietTon_path):
+            return False 
+        
+        pyautogui.click(donVi[0], donVi[1])
+        sleep(1)
+        text = "CTCT_BDG -- Chi nhánh Kỹ Thuật Viettel BDG"
+
+        # Sao chép vào clipboard
+        pyperclip.copy(text)
+
+        # Dán nội dung bằng Ctrl + V
+        pyautogui.hotkey("ctrl", "v")
+        pyautogui.press("enter") 
+
+        pyautogui.click(loai_giaoDich[0], loai_giaoDich[1])
+        sleep(1)
+        text = "Kho đơn vị"
+
+        # Sao chép vào clipboard
+        pyperclip.copy(text)
+
+        # Dán nội dung bằng Ctrl + V
+        pyautogui.hotkey("ctrl", "v")
+        pyautogui.press("enter") 
+        xuatExcelButton = pyautogui.locateOnScreen(xuatExcelButton_path, confidence=0.8)
+
+        if xuatExcelButton:
+            pyautogui.click(pyautogui.center(xuatExcelButton))
+            print("     Click nút xuất excel thành công!")
+
+        pyautogui.click(loai_giaoDich[0], loai_giaoDich[1])
+        sleep(1)
+        delete_All()
+        text = "Kho nhân viên"
+
+        # Sao chép vào clipboard
+        pyperclip.copy(text)
+
+        # Dán nội dung bằng Ctrl + V
+        pyautogui.hotkey("ctrl", "v")
+
+        xuatExcelButton = None
+        xuatExcelButton = pyautogui.locateOnScreen(xuatExcelButton_path, confidence=0.8)
+
+        if xuatExcelButton:
+            pyautogui.click(pyautogui.center(xuatExcelButton))
+            print("     Click nút xuất excel thành công!")
+        
+        sleep(1)
+        morong_button = pyautogui.locateOnScreen(morong_path, confidence=0.8)
+
+        if morong_button:
+            morong_button_center = pyautogui.center(morong_button)  # Lấy tọa độ trung tâm của nút
+            pyautogui.moveTo(morong_button_center.x, morong_button_center.y, duration=0.5)  # Di chuyển chuột đến đó trong 0.5 giây
+
+        sleep(1)
+        baocao_button = pyautogui.locateOnScreen(baocao_path, confidence=0.8)
+
+        if baocao_button:
+            baocao_button_center = pyautogui.center(baocao_button)  # Lấy tọa độ trung tâm của nút
+            pyautogui.moveTo(baocao_button_center.x, baocao_button_center.y, duration=0.5)  # Di chuyển chuột đến đó trong 0.5 giây
+        
+        sleep(1)
+        QuanLyBaoCaoOffline_button = pyautogui.locateOnScreen(QuanLyBaoCaoOffline_path, confidence=0.8)
+
+        if QuanLyBaoCaoOffline_button:
+            pyautogui.click(pyautogui.center(QuanLyBaoCaoOffline_button))
+            print("     Click nút QuanLyBaoCaoOffline_button")
+        
+        sleep(2)
+        timKiem_button = pyautogui.locateOnScreen(timkiem_path, confidence=0.8)
+
+        if timKiem_button:
+            pyautogui.click(pyautogui.center(timKiem_button))
+            print("     Click nút Tim kiem")
+
+        sleep(10)
+        
+        # Xuat file 1
+        pyautogui.click(xuatExcelFile_position1[0], xuatExcelFile_position1[1])
+        sleep(2)
+        delete_All()
+        pyautogui.typewrite("E:\Auto\Auto_tool_offical\data\excel\data_CDBR\kho_dong")
+
+        savebutton = pyautogui.locateOnScreen(savebutton_path, confidence=0.8)
+
+        if savebutton:
+            pyautogui.click(pyautogui.center(savebutton))
+            print("     Click nút save")  
+
+        # Xuat file 2
+        pyautogui.click(xuatExcelFile_position2[0], xuatExcelFile_position2[1])
+        sleep(2)
+
+        delete_All()
+        pyautogui.typewrite("E:\Auto\Auto_tool_offical\data\excel\data_CDBR\kho_dong")
+
+        savebutton = None
+        savebutton = pyautogui.locateOnScreen(savebutton_path, confidence=0.8)
+
+        if savebutton:
+            pyautogui.click(pyautogui.center(savebutton))
+            print("     Click nút save")
+
+        return True
+    
+    except Exception as e:
+        print(f"lỗi khi lấy dữ liệu Kho: {e}")
+        return False 

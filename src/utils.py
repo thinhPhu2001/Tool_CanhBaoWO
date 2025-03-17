@@ -12,6 +12,7 @@ from PIL import Image
 import win32clipboard
 import io
 import shutil
+from pynput import mouse
 
 # xóa dấu tiếng việt
 s1 = "ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ"
@@ -181,3 +182,23 @@ def find_Element_byImage(img_name):
         return True
     except pyautogui.ImageNotFoundException:
         return False
+
+   
+def find_Element_sFive(img_path):
+    try:
+        element = pyautogui.locateOnScreen(img_path, confidence=0.8)
+
+        if not element:
+            return False
+        return True
+    
+    except pyautogui.ImageNotFoundException:
+        return True
+    
+# def on_click(x, y, button, pressed):
+#     if pressed: 
+#         print(f"Bạn đã click tại: ({x}, {y})")
+
+# # Lắng nghe sự kiện click chuột
+# with mouse.Listener(on_click=on_click) as listener:
+#     listener.join()
