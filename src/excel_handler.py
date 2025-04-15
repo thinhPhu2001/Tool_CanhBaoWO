@@ -121,7 +121,7 @@ class ExcelManager:  # win32
             try:
                 self.excel.DisplayAlerts = False  # tắt thông báo excel
                 self.excel.Application.Quit()  # Thoát ứng dụng Excel
-                print("Excel Application đã được thoát.")
+                print("Excel Application đã được thoát.\n")
             except Exception as e:
                 print(f"Lỗi khi thoát Excel: {e}")
             finally:
@@ -252,7 +252,7 @@ class ExcelManager:  # win32
                                 pyautogui.click(
                                     pyautogui.center(end_button)
                                 )  # Click vào nút "End Macro"
-                                print("Đã xử lý Macro Error.")
+                                print("        Đã xử lý Macro Error.")
                                 break
                         except pyautogui.ImageNotFoundException:
                             pass
@@ -267,15 +267,15 @@ class ExcelManager:  # win32
         x.start()
 
         try:
-            print(f"Chạy macro {macro_name}")
+            print(f"    Chạy macro {macro_name}")
             self.excel.Application.Run(macro_name)
-            print(f"Macro '{macro_name}' đã được chạy thành công!")
+            print(f"    Macro '{macro_name}' đã được chạy thành công!")
             stop_thread.set()
             x.join()
             return True
 
         except Exception as e:
-            print(f"Lỗi khi chạy macro '{macro_name}': {e}. Dừng tiếng trình!")
+            print(f"    ❌ Lỗi khi chạy macro '{macro_name}': {e}. Dừng tiếng trình!")
             stop_thread.set()
             x.join()
             return False

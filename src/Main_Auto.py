@@ -1,10 +1,3 @@
-from config import *
-from database import *
-from utils import *
-from openVPN import *
-from excel_handler import *
-from browser import *
-
 from CDBR_process import *
 from Di_dong import *
 
@@ -42,28 +35,25 @@ def auto_combines():
         print(f"Lỗi chạy: {e}")
 
 
+# def shilf_time()
 if __name__ == "__main__":
 
     # Lên lịch chạy
-    # schedule.every().day.at("06:30").do(auto_combines)
-    # schedule.every().day.at("08:30").do(auto_process_CDBR)
-    # schedule.every().day.at("10:30").do(auto_process_CDBR)
-    # schedule.every().day.at("12:30").do(auto_combines)
-    # schedule.every().day.at("14:20").do(auto_process_CDBR)
-    # schedule.every().day.at("16:20").do(auto_combines)
+    # schedule.every().day.at(time_shift["First"]["start"]).do(auto_combines)
+    # schedule.every().day.at(time_shift["Second"]["start"]).do(auto_process_CDBR)
+    # schedule.every().day.at(time_shift["Third"]["start"]).do(auto_process_CDBR)
+    # schedule.every().day.at(time_shift["Fouth"]["start"]).do(auto_combines)
+    # schedule.every().day.at(time_shift["Fiveth"]["start"]).do(auto_process_CDBR)
+    # schedule.every().day.at(time_shift["Sixth"]["start"]).do(auto_combines)
 
-    # print("Đang chờ đến thời gian chạy tác vụ tiếp theo")
-    # while True:
-    #     schedule.run_pending()
-    #     sleep(3)
+    # getDB_to_excel(DATA_GNOC_RAW_PATH)
+    # on_openvpn()
 
-    # browser.start_browser(CHROME_PROFILE_CDBR_PATH)
-    # sleep(1000)
-    # auto_combines()
+    # auto_process_diDong()
+    # on_openvpn()
 
-     # Bước 3: Gửi tin nhắn qua WhatsApp hoặc Zalo
-
-   
-
-
-    
+    # auto_process_diDong()
+    # delete_data_folder(CNCT_IMG_PATH)
+    # on_openvpn()
+    if SENDBY.upper() == "WHATSAPP":
+        process_whatsapp_notifications()
