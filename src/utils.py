@@ -12,6 +12,7 @@ from PIL import Image
 import win32clipboard
 import io
 import shutil
+from datetime import datetime, timedelta, time as dt_time
 
 # xóa dấu tiếng việt
 s1 = "ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ"
@@ -136,7 +137,6 @@ def copy_image_to_clipboard(file_path):
         win32clipboard.EmptyClipboard()
         win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
         win32clipboard.CloseClipboard()
-        print("Ảnh đã được copy vào clipboard.")
     except Exception as e:
         print(f"Lỗi khi copy ảnh: {e}")
 
@@ -153,6 +153,6 @@ def delete_data_folder(folder_path):
                 shutil.rmtree(file_path)
             else:
                 os.remove(file_path)
-        print("Đã xóa hết dữ liệu trong thư mục.")
+        print(f"Đã xóa hết dữ liệu trong thư mục: {folder_path}.")
     else:
         print("Thư mục không tồn tại.")

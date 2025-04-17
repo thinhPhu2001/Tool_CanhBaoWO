@@ -567,23 +567,23 @@ class WhatsAppBot(BrowserManager):
                 if last_message.find_elements(
                     By.CSS_SELECTOR, 'span[data-icon="msg-dblcheck"]'
                 ):
-                    print("✅✅ Tin nhắn đã gửi đi và được nhận!")
+                    print("    ✅✅ Tin nhắn đã gửi đi và được nhận!")
                     return True
 
                 elif last_message.find_elements(
                     By.CSS_SELECTOR, 'span[data-icon="msg-check"]'
                 ):
-                    print("✅ Tin nhắn đã gửi đi nhưng chưa được nhận.")
+                    print("    ✅ Tin nhắn đã gửi đi nhưng chưa được nhận.")
                     sleep(5)
                     return True
 
                 sleep(2)  # Kiểm tra lại sau 2 giây
 
-            print("⚠️ Quá thời gian chờ nhưng chưa có xác nhận nhận tin nhắn.")
+            print("    ⚠️ Quá thời gian chờ nhưng chưa có xác nhận nhận tin nhắn.")
             return False
 
         except Exception as e:
-            print("❌ Lỗi khi lấy thông tin tin nhắn:", e)
+            print("    ❌ Lỗi khi lấy thông tin tin nhắn:", e)
             return False
 
 

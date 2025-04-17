@@ -6,7 +6,6 @@ from excel_handler import *
 from browser import *
 
 from pynput.keyboard import Controller, Key
-import schedule
 import pythoncom
 import sys
 
@@ -16,7 +15,6 @@ sys.stdout.reconfigure(encoding="utf-8")
 # excel variable
 # |-- CĐBR
 data_CDBR_tool_manager = ExcelManager(DATA_TOOL_MANAGEMENT_CDBR_PATH)
-
 # browser variable
 browser = BrowserManager()
 whatsapp = WhatsAppBot()
@@ -59,14 +57,12 @@ def excel_process_CDBR():
     try:
         # Mở Excel và thực hiện các macro xử lý dữ liệu
         data_CDBR_tool_manager.open_file()
+        sleep(10)
 
         macro_name = [
             "Handle_Data.XoaDuLieu",
             "Handle_Data.DanDuLieu",
-            "Handle_Data.rowHeight",
             "Handle_Data.autoFillFormulas",
-            "Handle_Data.SortColumn_TKM",
-            "Handle_Data.SortColumn_PAKH",
             "Handle_Data.SaveFile",
         ]
 
@@ -119,7 +115,7 @@ def run_macro_and_send_message_CDBR(platform):
         # Xử lý các dòng còn lại
         other_rows = df.iloc[1:]
         for index, row in other_rows.iterrows():
-            process_single_group(messaging_service, row, num_macro=5, num_mess=4)
+            process_single_group(messaging_service, row, num_macro=6, num_mess=6)
 
         return True
 
@@ -170,7 +166,7 @@ def process_single_group(service, row, num_macro, num_mess):
         for i in range(1, num_mess + 1)  # Fix để lấy đủ message
         if pd.notna(row.get(f"mess {i}")) and row.get(f"mess {i}", "").strip()
     ]
-    
+
     temp = service.find_group_name(link)
     retries = 0
     max_retries = 5
@@ -181,7 +177,11 @@ def process_single_group(service, row, num_macro, num_mess):
                 try:
                     if not data_CDBR_tool_manager.run_macro(macro):
                         continue
-                    sleep(5)
+                    sleep(10)
+                    
+                    ngay_hien_tai = datetime.now().strftime('%d/%m/%Y')
+
+                    message = f"{message} - Ngày: {ngay_hien_tai}"
 
                     if service == whatsapp:
                         service.send_message_CDBR(message)
@@ -210,20 +210,47 @@ def process_single_group(service, row, num_macro, num_mess):
         print(f"Đã thử {max_retries} lần nhưng không tìm thấy nhóm. Bỏ qua nhóm này.")
 
 
+def check_all_data_time():
+    """
+    Kiểm tra tất cả file dữ liệu gnoc lấy về là mới hay cũ
+    """
+    file_gnocs = [DATA_GNOC_PAKH_PATH, DATA_GNOC_TKM_PATH]
+    for file_gnoc in file_gnocs:
+        if not check_old_data(file_gnoc, time_geted=2):
+            print(f"Dữ liệu cũ: {file_gnoc}")
+            return False
+
+    return True
+
+
 # full quá trình xử lý của CDBR: lấy dữ liệu - xử lý - gửi dữ liệu (WhatsApp)
 def auto_process_CDBR():
     """
     Quy trình chạy WhatsApp/Zalo của CĐBR
     """
+
     date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"Bắt đầu chạy tiến trình CDBR vào lúc {date_time}")
 
     try:
         # Bước 1: Lấy dữ liệu từ DB vào Excel
-        if not getDB_to_excel_CDBR():
-            print("Lỗi khi lấy dữ liệu, chờ đến tác vụ tiếp theo")
+        for _ in range(5):
+            if getDB_to_excel_CDBR():
+                print("CĐBR: Lấy dữ liệu DB về Excel thành công!")
+                break
+
+            sleep(5)
+
+        else:
+            print("Lỗi khi lấy dữ liệu sau 5 lần thử ")
             return
-        print("CĐBR: Lấy dữ liệu DB về Excel thành công!")
+
+        # kiểm tra dữ liệu mới hay cũ
+        if not check_all_data_time():
+            print(
+                "Dữ liệu cũ, nên sẽ không gửi tin nhắn đi (cũng không xử lý excel).\n               STOP PROCCESSING!!!!"
+            )
+            return
 
         # Bước 2: Xử lý dữ liệu trong Excel (tối đa 5 lần thử)
         for attempt in range(5):
@@ -244,10 +271,10 @@ def auto_process_CDBR():
         else:
             print(f"CĐBR: Phương thức gửi '{SENDBY}' không được hỗ trợ")
 
-        #tắt browser sau khi chạy
+        # tắt browser sau khi chạy
         if browser.is_browser_open():
             browser.close()
-            
+
     except Exception as e:
         print(f"CĐBR - Lỗi trong quá trình xử lý: {e}")
 
@@ -259,7 +286,9 @@ def auto_process_CDBR():
             try:
                 excel = win32com.client.GetActiveObject("Excel.Application")
             except Exception:
-                print("No active Excel instance found.")  # This means Excel is already closed
+                print(
+                    "No active Excel instance found."
+                )  # This means Excel is already closed
                 return
 
             if excel is not None:

@@ -5,10 +5,8 @@ from openVPN import *
 from excel_handler import *
 from browser import *
 
-import shutil
 from sqlalchemy import text
 from pynput.keyboard import Controller, Key
-import schedule
 import sys
 
 # thay đôi môi trường tiếng Việt
@@ -27,8 +25,11 @@ zalo = ZaloBot()
 
 img_CNCT_path = CNCT_IMG_PATH / "tinh.jpg"  # đỉa chỉ gửi hình tỉnh
 
+start_time = dt_time(5, 00)
+end_time = dt_time(8, 00)
 
-def getDB_to_excel(excel_gnoc_path):
+
+def getDB_to_excel():
     max_retries = 5
     retries = 0
 
@@ -45,8 +46,8 @@ def getDB_to_excel(excel_gnoc_path):
             connection = connect_to_db()
 
             if connection is None:
-                raise ConnectionError("Kết nối Database thất bại.")
-            print("Kết nối Database thành công")
+                raise ConnectionError("    ❌ Kết nối Database thất bại.")
+            print("    Kết nối Database thành công")
 
             # Đọc file Excel "config", lấy dữ liệu từ "Sheet1"
             df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
@@ -64,7 +65,7 @@ def getDB_to_excel(excel_gnoc_path):
             # Chuyển danh sách các nhóm thành chuỗi SQL
             groups_sql = ", ".join(f"'{group}'" for group in groups)
 
-            # Tạo câu truy vấn SQL
+            # Tạo câu truy vấn SQL gnoc.get_wo_close_excel / gnoc.gnoc_open_90d
             query_pakh = f"""
                     SELECT *
                         FROM gnoc.gnoc_open_90d
@@ -91,9 +92,45 @@ def getDB_to_excel(excel_gnoc_path):
                         );
                     """
 
+            # Tạo câu truy vấn SQL gnoc.get_wo_close_excel / gnoc.gnoc_open_90d
+            query_pakh_dong = f"""
+                    SELECT *
+                        FROM gnoc.get_wo_close_excel
+                        WHERE `Nhóm điều phối` IN ({groups_sql})
+                        AND `Hệ thống` IN (
+                                        'TT',
+                                        'CC_SCVT',
+                                        'WFM-OTHERS',
+                                        'ICMS',
+                                        'WFM',
+                                        'MR',
+                                        'CO_DIEN',
+                                        'WFM-FT',
+                                        'VTNET_OS'
+                                    )
+                        AND `Loại công việc` NOT IN (
+                            'VCC_VHKT_OS_VSMART',
+                            'SAP_Nâng cấp trạm',
+                            'VCC_QLTS Các công việc quản lý tài sản trong VHKT trong  OS',
+                            'SAP_điều chuyển hạ cấp',
+                            'SAP_điều chuyển nâng cấp',
+                            'SAP_Hạ cấp thu hồi',
+                            'SAP_Nâng cấp trạm ứng cứu thông tin'
+                        )
+                        AND MONTH(`Thời điểm CD đóng`) = MONTH(CURDATE())
+                        AND YEAR(`Thời điểm CD đóng`) = YEAR(CURDATE());
+                    """
+
             # Xuất dữ liệu ra Excel
-            query_to_excel(connection, query_pakh, excel_gnoc_path)
-            print("Lấy file database thành công!")
+            query_to_excel(connection, query_pakh, DATA_GNOC_RAW_PATH)
+
+            #
+            now = datetime.now().time()
+
+            if start_time <= now <= end_time:
+                query_to_excel(connection, query_pakh_dong, DATA_GNOC_DONG_RAW_PATH)
+
+            print("    Lấy file database thành công!")
             return
 
         except ConnectionError as ce:
@@ -104,7 +141,98 @@ def getDB_to_excel(excel_gnoc_path):
             # Đảm bảo đóng kết nối database
             if "connection" in locals() and connection:
                 connection.close()
-                print("Đóng kết nối Database.")
+                print("    Đóng kết nối Database.")
+
+            # Đảm bảo tắt VPN
+            off_openvpn()
+
+        # Tăng số lần thử và thời gian chờ
+        retries += 1
+        print(f"Thử lại lần thứ {retries} sau 5 giây...")
+        sleep(5)
+
+    print("Không thể hoàn thành tác vụ sau nhiều lần thử.")
+
+
+def getDB_DONG_to_excel(excel_gnoc_path):
+    max_retries = 5
+    retries = 0
+
+    while retries < max_retries:
+        try:
+            # Kết nối OpenVPN
+            if not on_openvpn():
+                sleep(10)
+                raise ConnectionError
+
+            sleep(5)
+
+            # Kết nối cơ sở dữ liệu
+            connection = connect_to_db()
+
+            if connection is None:
+                raise ConnectionError("    ❌Kết nối Database thất bại.")
+            print("    Kết nối Database thành công")
+
+            # Đọc file Excel "config", lấy dữ liệu từ "Sheet1"
+            df = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="Sheet1", header=0)
+            # Đọc file Excel "Log", lấy dữ liệu từ "tinh"
+            df2 = pd.read_excel(DATA_DiDong_CONFIG_PATH, sheet_name="tinh", header=0)
+
+            # Lấy giá trị đầu tiên của cột "Tỉnh" (bỏ NaN nếu có)
+            first_province = df["Tỉnh"].dropna().iloc[0]
+            # Lọc dữ liệu theo giá trị đầu tiên của cột "Tỉnh"
+            filtered_df = df2[df2["Tỉnh"] == first_province]
+
+            # Lấy danh sách các nhóm từ cột "Nhóm" dựa trên dữ liệu đã lọc
+            groups = filtered_df["Nhóm điều phối"].dropna().astype(str).tolist()
+
+            # Chuyển danh sách các nhóm thành chuỗi SQL
+            groups_sql = ", ".join(f"'{group}'" for group in groups)
+
+            # Tạo câu truy vấn SQL gnoc.get_wo_close_excel / gnoc.gnoc_open_90d
+            query_pakh = f"""
+                    SELECT *
+                        FROM gnoc.get_wo_close_excel
+                        WHERE `Nhóm điều phối` IN ({groups_sql})
+                        AND `Hệ thống` IN (
+                                        'TT',
+                                        'CC_SCVT',
+                                        'WFM-OTHERS',
+                                        'ICMS',
+                                        'WFM',
+                                        'MR',
+                                        'CO_DIEN',
+                                        'WFM-FT',
+                                        'VTNET_OS'
+                                    )
+                        AND `Loại công việc` NOT IN (
+                            'VCC_VHKT_OS_VSMART',
+                            'SAP_Nâng cấp trạm',
+                            'VCC_QLTS Các công việc quản lý tài sản trong VHKT trong  OS',
+                            'SAP_điều chuyển hạ cấp',
+                            'SAP_điều chuyển nâng cấp',
+                            'SAP_Hạ cấp thu hồi',
+                            'SAP_Nâng cấp trạm ứng cứu thông tin'
+                        )
+                        AND MONTH(`Thời điểm CD đóng`) = MONTH(CURDATE())
+                        AND YEAR(`Thời điểm CD đóng`) = YEAR(CURDATE());
+                    """
+
+            # Xuất dữ liệu ra Excel
+            query_to_excel(connection, query_pakh, excel_gnoc_path)
+            print("    Lấy file database thành công!")
+            return
+
+        except ConnectionError as ce:
+            print(f"Lỗi kết nối: {ce}")
+        except Exception as e:
+            print(f"Lỗi không xác định: {e}")
+        finally:
+            # Đảm bảo đóng kết nối database
+            if "connection" in locals() and connection:
+                connection.close()
+                print("    Đóng kết nối Database.")
 
             # Đảm bảo tắt VPN
             off_openvpn()
@@ -127,12 +255,11 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
         if not excel_tool_manager.run_macro("Module2.DanDuLieu"):
             return False
 
-        print("chuyển dữ liệu thành công")
+        print("    Chuyển dữ liệu thành công")
 
         # Danh sách macro cần chạy theo thứ tự
         macros = [
             ("Module1.PasteFormulasAndValuesTTH_DOC", "lọc TTH_DOC"),
-            ("Module4.PasteFormulasAndValuesSimple_NhanVien", "lọc MapMucNhanVien"),
             ("Module2.pic_cum_huyen_loop", "xuất hình cụm huyện"),
             ("Module2.pic_TTH_doc", "xuất hình pic_TTH_doc"),
         ]
@@ -148,7 +275,33 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
                 print(f"Di động: Xử lý VBA '{description}' thất bại sau 3 lần thử")
                 return False
 
-        print("DI ĐỘNG: Đã xử lý VBA thành công!")
+        macros_tienDo = [
+            ("Module2.pic_cum_huyen_TienDo", "Xuất hình tiến độ theo cụm huyện"),
+            (
+                "Module1.PasteFormulasAndValues_TienDo_Ton",
+                "Lọc phần dữ liệu tồn đầu ngày, để lấy số liệu cho ngày mai",
+            ),
+        ]
+
+        now = datetime.now().time()
+
+        if start_time <= now <= end_time:
+            for macro, description in macros_tienDo:
+                for attempt in range(3):
+                    if excel_tool_manager.run_macro(macro):
+                        break
+                    print(
+                        f"Di động: chạy lệnh {description} thất bại, thử lần {attempt + 1}"
+                    )
+                else:
+                    print(f"Di động: Xử lý VBA '{description}' thất bại sau 3 lần thử")
+
+        else:
+            print(
+                "    \n    ⏱⏱⏱ Ngoài khung giờ cho phép, hàm Tiến độ sẽ không chạy.\n"
+            )
+
+        print("    ✔ DI ĐỘNG: Đã xử lý VBA thành công!")
         return True
 
     except Exception as e:
@@ -246,6 +399,7 @@ def send_message_user_WSA():
             img_name = row["img"]
             message = str(row["Message"])
             img_path = USER_IMG_PATH / f"{img_name}.jpg"
+            img_TienDo_path = TIENDO_IMG_PATH / f"{img_name}.jpg"
 
             if not img_name or not Path(img_path).is_file():
                 print(f"⚠️ Không tìm thấy ảnh {img_path}, bỏ qua {cum_doi}.", end="\n\n")
@@ -267,7 +421,31 @@ def send_message_user_WSA():
                                 cum_doi
                             )  # Thêm cụm đội vào danh sách thành công
 
-                            print(f"Đã gửi thành công cho {cum_doi}.", end="\n\n")
+                            now = datetime.now().time()
+
+                            if start_time <= now <= end_time:
+                                if (
+                                    not img_TienDo_path
+                                    or not Path(img_TienDo_path).is_file()
+                                ):
+                                    print(
+                                        f"⚠️ Không tìm thấy ảnh {img_TienDo_path}, bỏ qua gửi tiến độ của {cum_doi}.",
+                                        end="\n\n",
+                                    )
+                                    continue
+                                # Lấy ngày hôm nay
+                                today = datetime.now().date()
+
+                                # Tính ngày hôm qua
+                                yesterday = today - timedelta(days=1)
+                                message_tienDo = f"Tiến độ {ma_nhom} ngày {yesterday}"
+
+                                print("    Gửi tin nhắn tiến độ!")
+                                whatsapp.send_attached_img_message(
+                                    message_tienDo, img_TienDo_path
+                                )
+
+                            print(f"    Đã gửi thành công cho {cum_doi}.", end="\n\n")
 
                             break
 
@@ -437,6 +615,10 @@ def process_whatsapp_notifications():
         print(f"Lỗi khi gửi tin nhắn huyện: {e}")
         print(e)
 
+    finally:
+        sleep(30)
+        browser.close()
+
 
 def process_zalo_notifications():
     """
@@ -444,7 +626,7 @@ def process_zalo_notifications():
     """
     if browser.is_browser_open():
         browser.close()
-        
+
     try:
         # gửi thông báo cấp CNCT
         status_process = send_message_cnct_zalo()
@@ -467,30 +649,38 @@ def process_zalo_notifications():
     except Exception as e:
         print(f"⚠️ Lỗi trong quá trình gửi thông báo cho các huyện: {e}")
 
+    finally:
+        sleep(30)
+        browser.close()
+
 
 def auto_process_diDong():
     """
     Quá trình gửi cảnh báo di động: lấy dữ liệu - xử lý dữ liệu - gửi tin nhắn
     """
     date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Bắt đầu chạy tiến trình CDBR vào lúc {date_time}")
+    print(f"⭐⭐⭐ Bắt đầu chạy tiến trình Di Động vào lúc {date_time} ⭐⭐⭐")
 
     try:
         # Xóa dữ liệu cũ
         delete_data_folder(CNCT_IMG_PATH)
         delete_data_folder(USER_IMG_PATH)
+        delete_data_folder(TIENDO_IMG_PATH)
 
         # lấy dữ liệu gnoc về xử lý
-        getDB_to_excel(DATA_GNOC_RAW_PATH)
+        getDB_to_excel()
 
+        if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
+            print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")
+            return
         # xử lý excel
         for attempt in range(3):
             if excel_transition_and_run_macro(data_tool_manager):
                 break
-            print(f"CĐBR: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
+            print(f"Di Động: Xử lý dữ liệu Excel thất bại, thử lần {attempt + 1}")
 
         else:
-            print("CĐBR: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
+            print("Di Động: Xử lý dữ liệu Excel thất bại sau 5 lần thử")
             return
 
         if SENDBY.upper() == "WHATSAPP":

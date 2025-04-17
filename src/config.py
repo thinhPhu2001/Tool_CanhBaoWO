@@ -23,6 +23,7 @@ EXCEL_PATH = project_dir / "data" / "excel"
 
 # thư mục dữ liệu DI ĐỘNG
 DATA_GNOC_RAW_PATH = EXCEL_PATH / "data_didong" / "data_GNOC_raw.xlsx"
+DATA_GNOC_DONG_RAW_PATH = EXCEL_PATH / "data_didong" / "data_GNOC_DONG_raw.xlsx"
 DATA_TOOL_MANAGEMENT_PATH = EXCEL_PATH / "data_didong" / "Log_ton_GNOC_date.xlsb"
 DATA_DiDong_CONFIG_PATH = EXCEL_PATH / "data_didong" / "config.xlsb"
 
@@ -36,17 +37,10 @@ DATA_TOOL_MANAGEMENT_CDBR_PATH = EXCEL_PATH / "data_CDBR" / "CDBR.xlsm"
 # LƯU HÌNH CẢNH BÁO DI ĐỘNG
 CNCT_IMG_PATH = EXCEL_PATH / "img" / "tth"
 USER_IMG_PATH = EXCEL_PATH / "img" / "cum_huyen"
+TIENDO_IMG_PATH = EXCEL_PATH / "img" / "TienDo"
 
 SRC_PATH = project_dir / "src"
 MAIN_PATH = project_dir / "src" / "Main_Auto.py"
-
-# # Tìm tất cả các file có đuôi .ovpn trong thư mục "opvn"
-# ovpn_files = glob.glob(str(project_dir / "data" / "opvn" / "*.ovpn"))
-# if ovpn_files is None:
-#     print(f"Không tìm thấy file ovpn")
-# else:
-#     OPEN_VPN_PROFILE_PATH = Path(ovpn_files[0])
-#     print(f"đường dẫn ovpn profile: {OPEN_VPN_PROFILE_PATH}")
 
 # Đọc file cấu hình OpenVPN
 OPEN_VPN_CONFIG_PATH = project_dir / "config.txt"
