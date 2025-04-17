@@ -22,7 +22,7 @@ time_shift = {
     "Second": {"start": "08:35"},
     "Third": {"start": "10:30"},
     "Fourth": {"start": "12:15"},
-    "Fifth": {"start": "14:35"},
+    "Fifth": {"start": "14:20"},
     "Sixth": {"start": "16:30"},
     "Seventh": {"start": "19:30"},
 }
