@@ -627,6 +627,7 @@ def process_zalo_notifications():
     if browser.is_browser_open():
         browser.close()
 
+
     try:
         # gửi thông báo cấp CNCT
         status_process = send_message_cnct_zalo()
@@ -668,7 +669,7 @@ def auto_process_diDong():
         delete_data_folder(TIENDO_IMG_PATH)
 
         # lấy dữ liệu gnoc về xử lý
-        getDB_to_excel()
+        getDB_to_excel(DATA_GNOC_RAW_PATH)
 
         if not check_old_data_Didong(DATA_GNOC_RAW_PATH):
             print("Dữ liệu cũ, chờ đến tác vụ tiếp theo")

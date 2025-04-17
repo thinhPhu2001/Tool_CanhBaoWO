@@ -79,8 +79,6 @@ def on_openvpn():
             # print(
             #     f"OTP hiện tại: {totp.now()}",
             # )
-
-            sleep(2)
             pyautogui.typewrite(get_otp(OTP_SECRET))  # Enter OTP
             keyboard = Controller()
             sleep(2)

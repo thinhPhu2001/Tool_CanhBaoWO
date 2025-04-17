@@ -35,6 +35,7 @@ def auto_combines():
         print(f"Lỗi chạy: {e}")
 
 
+# def shilf_time()
 if __name__ == "__main__":
 
     # Lên lịch chạy

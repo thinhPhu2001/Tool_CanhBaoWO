@@ -110,7 +110,7 @@ def run_macro_and_send_message_CDBR(platform):
 
         # Xử lý dòng đầu tiên
         first_row = df.iloc[:1]
-        process_group(messaging_service, first_row, num_macro=2, num_mess=2)
+        process_group(messaging_service, first_row, num_macro=9, num_mess=9)
 
         # Xử lý các dòng còn lại
         other_rows = df.iloc[1:]
@@ -223,6 +223,19 @@ def check_all_data_time():
     return True
 
 
+def check_all_data_time():
+    """
+    Kiểm tra tất cả file dữ liệu gnoc lấy về là mới hay cũ
+    """
+    file_gnocs = [DATA_GNOC_PAKH_PATH, DATA_GNOC_TKM_PATH]
+    for file_gnoc in file_gnocs:
+        if not check_old_data(file_gnoc, time_geted=2):
+            print(f"Dữ liệu cũ: {file_gnoc}")
+            return False
+
+    return True
+
+
 # full quá trình xử lý của CDBR: lấy dữ liệu - xử lý - gửi dữ liệu (WhatsApp)
 def auto_process_CDBR():
     """
@@ -234,6 +247,22 @@ def auto_process_CDBR():
 
     try:
         # Bước 1: Lấy dữ liệu từ DB vào Excel
+        for _ in range(5):
+            if getDB_to_excel_CDBR():
+                print("CĐBR: Lấy dữ liệu DB về Excel thành công!")
+                break
+
+            sleep(5)
+
+        else:
+            print("Lỗi khi lấy dữ liệu sau 5 lần thử ")
+            return
+
+        # kiểm tra dữ liệu mới hay cũ
+        if not check_all_data_time():
+            print(
+                "Dữ liệu cũ, nên sẽ không gửi tin nhắn đi (cũng không xử lý excel).\n               STOP PROCCESSING!!!!"
+            )
         for _ in range(5):
             if getDB_to_excel_CDBR():
                 print("CĐBR: Lấy dữ liệu DB về Excel thành công!")
