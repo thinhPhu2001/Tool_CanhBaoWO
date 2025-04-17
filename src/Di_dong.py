@@ -25,8 +25,11 @@ zalo = ZaloBot()
 
 img_CNCT_path = CNCT_IMG_PATH / "tinh.jpg"  # đỉa chỉ gửi hình tỉnh
 
-start_time = dt_time(5, 00)
-end_time = dt_time(8, 00)
+start_time_data = dt_time(5, 00)
+end_time_data = dt_time(13, 00)
+
+start_time_message = dt_time(5, 00)
+end_time_message = dt_time(8, 00)
 
 
 def getDB_to_excel():
@@ -127,7 +130,7 @@ def getDB_to_excel():
             #
             now = datetime.now().time()
 
-            if start_time <= now <= end_time:
+            if start_time_data <= now <= end_time_data:
                 query_to_excel(connection, query_pakh_dong, DATA_GNOC_DONG_RAW_PATH)
 
             print("    Lấy file database thành công!")
@@ -277,15 +280,11 @@ def excel_transition_and_run_macro(excel_tool_manager: ExcelManager):
 
         macros_tienDo = [
             ("Module2.pic_cum_huyen_TienDo", "Xuất hình tiến độ theo cụm huyện"),
-            (
-                "Module1.PasteFormulasAndValues_TienDo_Ton",
-                "Lọc phần dữ liệu tồn đầu ngày, để lấy số liệu cho ngày mai",
-            ),
         ]
 
         now = datetime.now().time()
 
-        if start_time <= now <= end_time:
+        if start_time_data <= now <= end_time_data:
             for macro, description in macros_tienDo:
                 for attempt in range(3):
                     if excel_tool_manager.run_macro(macro):
@@ -423,7 +422,7 @@ def send_message_user_WSA():
 
                             now = datetime.now().time()
 
-                            if start_time <= now <= end_time:
+                            if start_time_message <= now <= end_time_message:
                                 if (
                                     not img_TienDo_path
                                     or not Path(img_TienDo_path).is_file()
@@ -626,7 +625,6 @@ def process_zalo_notifications():
     """
     if browser.is_browser_open():
         browser.close()
-
 
     try:
         # gửi thông báo cấp CNCT
