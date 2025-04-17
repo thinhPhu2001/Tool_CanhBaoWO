@@ -535,6 +535,7 @@ def send_message_user_with_TAG_zalo():
         message = str(row["Message"])
         img_name = row["img"]
         img_path = USER_IMG_PATH / f"{img_name}.jpg"
+        img_tienDo_path = TIENDO_IMG_PATH / f"{img_name}.jpg"
 
         try:
             # Kiểm tra xem hình ảnh có tồn tại không
@@ -573,6 +574,45 @@ def send_message_user_with_TAG_zalo():
                 EC.element_to_be_clickable((By.XPATH, XPATHS_ZALO["send_button"]))
             )
             send_button.click()
+
+            now = datetime.now().time()
+            if start_time_message <= now <= end_time_message:
+                if not img_tienDo_path or not Path(img_tienDo_path).is_file():
+                    print(
+                        f"⚠️ Không tìm thấy ảnh {img_tienDo_path}, bỏ qua gửi tiến độ của {cum_doi}.",
+                        end="\n\n",
+                    )
+                    continue
+                # Lấy ngày hôm nay
+                today = datetime.now().date()
+
+                # Tính ngày hôm qua
+                yesterday = today - timedelta(days=1)
+
+                message_tienDo = f"Tiến độ ngày {yesterday}"
+
+                print("    Gửi tin nhắn tiến độ!")
+
+                zalo.send_attached_img(img_tienDo_path)
+                sleep(1)
+
+                message_box = WebDriverWait(zalo.driver, 20).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, XPATHS_ZALO["message_box"])
+                    )
+                )
+                message_box.click()
+                message_box.send_keys(
+                    Keys.CONTROL, "a", Keys.BACKSPACE
+                )  # xóa nội dung cũ nếu có
+                message_box.send_keys(message_tienDo)
+
+                # Nhấn nút gửi tin nhắn
+                send_button = WebDriverWait(zalo.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, XPATHS_ZALO["send_button"]))
+                )
+                send_button.click()
+
             print(f"Tin nhắn gửi đến {cum_doi} thành công!!!")
             success_list.append(str(cum_doi))
             sleep(5)
